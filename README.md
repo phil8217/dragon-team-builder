@@ -5,10 +5,16 @@
 ## 功能
 
 - 角色瀏覽與搜尋
-- 陣營、職業、品質、功能與多條件技能篩選
+- 陣營、職業、品質與「技能、能力」多條件篩選
 - 最多 6 人隊伍組成
 - 角色圖片、陣營標誌與職業圖示
 - 技能類型與元素機制說明
+- 技能狀態、控制效果與元素反應可點擊查看說明
+- 技能描述中的技能名稱自動依技能類型上色
+- 可勾選擁有的角色，並只用擁有角色篩選隊伍候選
+- 技能、能力下拉選單支援文字搜尋
+- 詳細資料支援搜尋目前角色的技能與敘述
+- 工具列可儲存與載入擁有角色清單
 - GameKee、TapTap 與台服公告資料匯入工具
 
 ## 執行
@@ -45,6 +51,7 @@ python .\tools\import_taptap_skills.py
 ```powershell
 python -m PyInstaller --noconfirm --clean --onefile --windowed `
   --name DragonTeamBuilder `
+  --distpath . `
   --paths .\src `
   --add-data ".\src\dragon_team_builder\data;dragon_team_builder\data" `
   .\src\dragon_team_builder\__main__.py

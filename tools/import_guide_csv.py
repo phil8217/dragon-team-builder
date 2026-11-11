@@ -15,7 +15,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from dragon_team_builder.quality import is_legendary_or_higher
+from dragon_team_builder.quality import is_legendary_or_higher, normalize_quality
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -114,7 +114,7 @@ def import_csv(path: Path, class_key: str) -> list[dict]:
                 "special_functions": functions,
                 "aliases": split_lines(padded[3]),
                 "image_url": "",
-                "quality": clean(padded[4]),
+                "quality": normalize_quality(clean(padded[4])),
                 "tier": clean(padded[1]),
                 "guide_notes": "\n".join(notes),
                 "source": {

@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from dragon_team_builder.quality import is_legendary_or_higher
+from dragon_team_builder.quality import is_legendary_or_higher, normalize_quality
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -172,6 +172,37 @@ def parse_page(path: Path) -> dict:
                 "metrics": metrics,
             }
         )
+    talent_name = first(
+        r'<div class="talent-title">.*?<h3>(.*?)</h3>',
+        content,
+    )
+    talent_levels = all_matches(
+        r'<div class="talent-level-effect">(.*?)</div>',
+        content,
+    )
+    if talent_name and talent_levels:
+        skills.append(
+            {
+                "name": talent_name,
+                "description": "\n".join(talent_levels),
+                "skill_type": "天賦",
+                "tags": [
+                    label
+                    for token, label in TAG_PATTERNS.items()
+                    if any(token in level for level in talent_levels)
+                ],
+                "metrics": [],
+                "sources": [
+                    {
+                        "kind": "community",
+                        "title": "Dragon Companion 角色技能頁",
+                        "url": SOURCE_URL + path.name,
+                        "accessed_at": "2026-11-11",
+                        "confidence": "medium",
+                    }
+                ],
+            }
+        )
     return {
         "page_name": overview,
         "epithet": epithet,
@@ -267,6 +298,7 @@ def main() -> None:
         record["class_name"] = CLASS_NORMALIZATION.get(
             record["class_name"], record["class_name"]
         )
+        record["quality"] = normalize_quality(record.get("quality", ""))
 
     by_base_id = {
         record["id"]: record

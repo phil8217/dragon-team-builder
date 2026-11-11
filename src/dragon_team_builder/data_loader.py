@@ -6,13 +6,18 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from .abilities import normalize_abilities
 from .models import Character, Skill, SourceReference
+from .quality import normalize_quality
+from .text_normalizer import to_traditional
 
 
 def _source(value: dict | None) -> SourceReference | None:
     if value is None:
         return None
-    return SourceReference(**value)
+    source = dict(value)
+    source["title"] = to_traditional(source.get("title", ""))
+    return SourceReference(**source)
 
 
 def load_characters(path: str | Path) -> list[Character]:
@@ -30,15 +35,46 @@ def load_characters(path: str | Path) -> list[Character]:
         if not isinstance(record, dict):
             raise ValueError(f"角色資料項目必須是物件：{source_path}")
         record = dict(record)
+        for key in (
+            "name",
+            "class_name",
+            "main_faction",
+            "secondary_faction",
+            "quality",
+            "tier",
+            "guide_notes",
+        ):
+            record[key] = to_traditional(record.get(key, ""))
+        record["special_functions"] = normalize_abilities([
+            to_traditional(value)
+            for value in record.get("special_functions", [])
+        ])
+        record["aliases"] = [
+            to_traditional(value) for value in record.get("aliases", [])
+        ]
         record.setdefault("image_url", "")
         record.setdefault("image_file", "")
+        record["quality"] = normalize_quality(record.get("quality", ""))
         record["source"] = _source(record.get("source"))
         record["skills"] = [
             Skill(
                 **{
                     **skill,
+                    "name": to_traditional(skill.get("name", "")),
+                    "description": to_traditional(
+                        skill.get("description", "")
+                    ),
+                    "skill_type": to_traditional(skill.get("skill_type", "")),
+                    "tags": normalize_abilities([
+                        to_traditional(tag)
+                        for tag in skill.get("tags", [])
+                    ]),
+                    "metrics": [
+                        to_traditional(metric)
+                        for metric in skill.get("metrics", [])
+                    ],
                     "sources": [
-                        SourceReference(**source)
+                        _source(source)
                         for source in skill.get("sources", [])
                     ],
                 }
