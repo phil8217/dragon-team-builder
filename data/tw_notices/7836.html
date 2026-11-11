@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>新聞公告 │ 龍魂旅人</title>
+    <meta charset="UTF-8" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="香、婆、龍、逆轉、幻想、龍魂旅人、放置、養成、收集、勇者、公主、廢材、性轉、女神、法夫納、齊格菲、傲嬌、惡龍、輕鬆、搞笑、歡樂、日系、Q版、策略、變身、反差、搞笑、異世界、家裡蹲、美少女、RPG" />
+    <link rel="shortcut icon" href="https://tw-media.game-beans.com/sod/news/img/favicon.ico" />
+    <!-- Facebook -->
+    <meta property="og:title" content="龍魂旅人官方網站">
+    <meta property="og:site_name" content="龍魂旅人官方網站">
+    <meta property="og:url" content="https://sod.game-beans.com">
+    <meta property="og:description" content="家裡蹲的廢材惡龍，如何逆轉龍生？快來收集英雄夥伴性轉女神一起冒險，感受當惡龍逆轉翻天的樂趣！">
+    <meta property="og:image" content="https://tw-media.game-beans.com/sod/news/img/preview.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <!--  CSS  -->
+    <link rel="stylesheet" href="/r/cms/www/default/css/sod/default.css" />
+    <link rel="stylesheet" href="/r/cms/www/default/css/sod/menu.css" />
+    <link rel="stylesheet" href="/r/cms/www/default/css/sod/styles.css" />
+</head>
+
+<body>
+    <!-- fixed -->
+    <div class="gotop"> </div>
+    <!-- menu-top -->
+    <div class="wrapper ">
+        <!-- main -->
+        <main>
+            <!-- news -->
+            <section class="news">
+                <ul>
+                    <li class="block">
+                    </li>
+                    <li class="news-group">
+                        <img class="tit" src="https://tw-media.game-beans.com/sod/news/img/tit.png">
+                        <div class="btn-move"></div>
+                        <div class="btn-back"></div>
+                        <div class="content content-s">
+                            <div class="date">2026.03.16</div>
+                            <h1 style="color:;">異常帳號凍結聲明</h1>
+							<div>
+									<div><img alt="" src="https://tw-media.game-beans.com/media/pictures/sod/2025030605.jpg" style="width: 1260px; height: 270px;" /></div>
+<div>尊敬的持戒者，</div>
+<div>　　</div>
+<div>為維護《龍魂旅人》遊戲的平衡公正以及保障玩家權益與帳號資訊安全，</div>
+<div>官方將嚴格處理任何涉及會影響伺服器穩定度的不當刷號行為，對於有任何玩家經官方查核後為異常帳號情況將進行凍結帳號處理。</div>
+<div>為了避免玩家角色資料遭受損失，對於購買代練帳號、協助代儲及詐騙之相關行為，團隊將採取必要的法律措施來進行懲處！</div>
+<div>感謝各位玩家對《龍魂旅人》的支持，希望玩家們能共同維護遊戲秩序，一起抵制非法行為，創造公平的遊戲環境。</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div><strong>凍結資訊</strong></div>
+<div><span style="color:#ff0000;">2026/3/16 已凍結：4951 組帳號</span></div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>如您的帳號被凍結或有任何其他問題或需要諮詢~~</div>
+<div>持戒者可來信<a href="https://www.game-beans.com/report.html">客服中心</a>，將有專人為您服務</div>
+<div>&nbsp;</div>
+<div>來信時請一定要提供以下資料以利盡快協助您~</div>
+<div>1、角色ID</div>
+<div>2、問題說明</div>
+<div>3、聯繫方式、聯繫方式(Mail)</div>
+
+							</div>
+                            <div class="back-news"><a href="https://sod.game-beans.com/jx/sodNotice/index.html" target="_self">新聞列表</a></div>
+                         <div class="back-news"><a href="https://sod.game-beans.com/index.html" target="_self">官網首頁</a></div>
+                            <div class="cp-page"><img src="https://tw-media.game-beans.com/sod/news/img/cp-m.png"></div>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+        </main>
+        <section class="bg  move-back">
+            <div class="bg-1"> </div>
+            <div class="bg-2"> </div>
+            <div class="bg-3"> </div>
+        </section>
+    </div>
+    <!--  JQ -->
+    <script src="https://tw-media.game-beans.com/media/common/js/jquery/1.10.2/jquery.min.js"></script>
+    <script>
+    // gotop =============================================
+
+    $('.gotop').click(function() {
+        $('html,body').animate({ scrollTop: 0 }, 1000);
+        return false;
+    });
+
+    $(window).scroll(function() {
+        if ($(this).scrollTop() > 300) {
+            $('.gotop').fadeIn(0);
+        } else {
+            $('.gotop').stop().fadeOut(0);
+        }
+    });
+
+
+    //  click   ==================================================
+
+    $(".btn-move").click(function() {
+        $(this).hide(0);
+        $(".btn-back").fadeIn();
+        $(".bg,.block").removeClass("move-back").addClass("move-left");
+        $(".news-group").removeClass("move-right").addClass("move-center");
+        $(".content").removeClass("content-s").addClass("content-b");
+        return false;
+    });
+    $(".btn-back").click(function() {
+        $(this).hide(0);
+        $(".btn-move").fadeIn();
+        $(".bg,.block").removeClass("move-left").addClass("move-back");
+        $(".news-group").removeClass("move-center").addClass("move-right");
+        $(".content").removeClass("content-b").addClass("content-s");
+        return false;
+    });
+    </script>
+</body>
+
+</html>
