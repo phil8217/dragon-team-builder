@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="龍魂旅人角色與隊伍組成器">
+  <title>龍魂旅人角色與隊伍組成器</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>龍魂旅人角色與隊伍組成器</h1>
+    <span id="data-version" class="version-label">資料載入中</span>
+  </header>
+  <div class="toolbar" role="toolbar" aria-label="角色工具">
+    <button data-action="owned-manager">擁有角色管理</button>
+    <button id="owned-toggle" class="toggle-button" data-action="owned-filter">只顯示已擁有角色</button>
+    <button id="images-toggle" class="toggle-button is-on" data-action="images">顯示角色圖片</button>
+    <span class="toolbar-separator"></span>
+    <button data-action="save-owned">儲存擁有角色</button>
+    <button data-action="load-owned">載入擁有角色</button>
+    <button data-action="clear-owned">清除擁有角色</button>
+    <span class="toolbar-separator"></span>
+    <button data-action="export-team">匯出隊伍</button>
+    <button data-action="import-team">匯入隊伍</button>
+    <button data-action="official-check">檢查官方更新</button>
+    <button data-action="official-report">台服官方更新公告</button>
+    <input id="owned-file-input" type="file" accept="application/json" hidden>
+    <input id="team-file-input" type="file" accept="application/json" hidden>
+  </div>
+
+  <main class="app-main">
+    <nav class="tabs" aria-label="主要功能">
+      <button class="tab is-active" data-tab="browser">角色瀏覽器</button>
+      <button class="tab" data-tab="team">隊伍組成器</button>
+      <button class="tab" data-tab="enemy">敵隊分析</button>
+      <button class="tab" data-tab="sources">資料來源</button>
+    </nav>
+
+    <section id="browser-tab" class="tab-panel is-active">
+      <div class="three-column browser-layout">
+        <aside id="browser-filters" class="filter-panel"></aside>
+        <section class="list-panel">
+          <div class="panel-title"><h2>角色清單</h2><span id="browser-count"></span></div>
+          <div id="browser-list" class="character-list"></div>
+        </section>
+        <section id="browser-details" class="details-panel"></section>
+      </div>
+    </section>
+
+    <section id="team-tab" class="tab-panel">
+      <div class="three-column team-layout">
+        <section class="candidate-panel">
+          <div id="team-filters" class="filter-panel embedded"></div>
+          <p class="hint">勾選角色表示已擁有，可用篩選條件只顯示擁有角色</p>
+          <div id="team-list" class="character-list"></div>
+          <button class="primary full-width" data-action="add-selected">加入隊伍</button>
+        </section>
+        <section class="team-config">
+          <fieldset class="group-box">
+            <legend>隊伍配置</legend>
+            <div class="team-actions">
+              <select id="team-selector"></select>
+              <button data-action="new-team">新增</button>
+              <button data-action="rename-team">重新命名</button>
+              <button data-action="delete-team">刪除</button>
+            </div>
+            <div id="team-grid" class="team-grid"></div>
+            <p id="team-position-label" class="hint">請先選擇九宮格位置</p>
+            <div class="group-box analysis-box"><h3>隊伍分析</h3><div id="team-analysis"></div></div>
+            <button data-action="remove-selected">移除選取角色</button>
+            <button data-action="clear-team">清空隊伍</button>
+          </fieldset>
+        </section>
+        <section id="team-details" class="details-panel"></section>
+      </div>
+    </section>
+
+    <section id="enemy-tab" class="tab-panel">
+      <div class="enemy-board">
+        <fieldset class="group-box"><legend>我方隊伍</legend><div id="own-board" class="board-grid"></div></fieldset>
+        <div class="relation-arrow">↔<br><span>對位<br>關係</span></div>
+        <fieldset class="group-box"><legend>敵方隊伍</legend><div id="enemy-board" class="board-grid"></div></fieldset>
+      </div>
+      <fieldset class="group-box relation-panel"><legend>站位與威脅分析</legend><div id="enemy-analysis"></div></fieldset>
+      <div class="button-row">
+        <button data-action="edit-enemy">編輯敵隊</button>
+        <button data-action="recommend">依敵隊需求推薦隊伍</button>
+        <button data-action="refresh-enemy">重新整理分析</button>
+      </div>
+    </section>
+
+    <section id="sources-tab" class="tab-panel">
+      <article id="sources-content" class="source-content"></article>
+    </section>
+  </main>
+  <div id="modal-root"></div>
+  <footer id="status-bar">已載入角色資料</footer>
+  <script src="./app.js" defer></script>
+</body>
+</html>

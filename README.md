@@ -65,3 +65,28 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed `
   --add-data ".\src\dragon_team_builder\data;dragon_team_builder\data" `
   .\src\dragon_team_builder\__main__.py
 ```
+
+## 網頁版
+
+網頁版位於 [web/](./web/)，採用不需要後端的靜態網頁架構，可部署至 GitHub Pages，
+並以桌面版的工具列與分頁操作為介面規格：
+
+- 角色瀏覽器三欄配置、關鍵字／陣營／職業／品質／技能／元素機制篩選
+- 擁有角色管理、匯入／匯出、只顯示已擁有角色與圖片顯示開關
+- 隊伍組成器候選清單、九宮格、多隊伍與隊伍分析
+- 敵隊分析雙九宮格、反制需求與推薦隊伍
+- 台服官方更新公告清單
+- 角色資料與隊伍資料保存於瀏覽器 LocalStorage
+
+本機預覽：
+
+```powershell
+python -m http.server 8000
+```
+
+然後開啟 `http://localhost:8000/web/`。GitHub Pages 部署設定位於
+[.github/workflows/deploy-pages.yml](./.github/workflows/deploy-pages.yml)；
+第一次部署前，請在 GitHub repository 的 Pages 設定將來源設為 `GitHub Actions`。
+
+網頁版資料與桌面版目前由同一份角色資料產生。官方公告的每日抓取與資料更新應由
+GitHub Actions 執行，不能依賴瀏覽器直接抓取官方網站。
