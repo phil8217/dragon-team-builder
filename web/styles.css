@@ -47,8 +47,17 @@ h3 { margin: 0 0 8px; font-size: 15px; }
 .filter-row > label { display: block; margin-bottom: 3px; color: var(--muted); }
 .filter-row input, .filter-row select { width: 100%; padding: 5px; }
 .skill-filter-row { display: flex; gap: 4px; margin-bottom: 4px; }
-.skill-filter-row select { flex: 1; }
+.skill-filter-row .combo { flex: 1; }
 .skill-filter-row button { width: 28px; padding: 2px; }
+.combo { position: relative; }
+.combo.disabled { opacity: .5; pointer-events: none; }
+.filter-row .combo-input { padding-right: 20px; }
+.combo-arrow { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--muted); }
+.combo-list { position: absolute; z-index: 30; left: 0; right: 0; top: 100%; max-height: 240px; overflow-y: auto; background: #fff; border: 1px solid #9aa4b2; box-shadow: 0 4px 10px rgba(0,0,0,.2); }
+.combo-option { display: flex; align-items: center; gap: 6px; padding: 4px 8px; cursor: pointer; }
+.combo-option img { width: 22px; height: 22px; object-fit: contain; }
+.combo-option:hover, .combo-option.active { background: #3a78c9; color: #fff; }
+.combo-empty { padding: 6px 8px; color: var(--muted); }
 .add-filter { width: 100%; margin: 2px 0 8px; }
 .check-row { display: flex; gap: 5px; align-items: center; margin: 7px 0; }
 .list-panel { overflow: hidden; }
