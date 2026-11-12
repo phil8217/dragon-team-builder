@@ -1,0 +1,177 @@
+[
+  {
+    "id": "hideout-team-pve-arcane-5",
+    "name": "Arcane Wisdom — PvE 5",
+    "mode": "PVE",
+    "faction": "arcane_wisdom",
+    "character_ids": [
+      "warrior-四聖-青龍",
+      "warrior-亂世魔王-瞳",
+      "support-湖中仙女-薇薇安"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "dtwiki-end_game_sanctum_glory",
+    "name": "End Game Sanctum Glory",
+    "mode": "PVE",
+    "faction": "sanctum_glory",
+    "character_ids": [
+      "support-湖中仙女-薇薇安",
+      "warrior-亂世魔王-瞳",
+      "support-死亡女神-海拉",
+      "mage-眾神之王-宙斯"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pve-rebirth-3",
+    "name": "PvE Team - Rebirth #3",
+    "mode": "PVE",
+    "faction": "otherworld_return",
+    "character_ids": [
+      "mage-詭計之神-洛基",
+      "support-死亡女神-海拉",
+      "warrior-四聖-青龍"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pve-sanctum-1",
+    "name": "PvE Team - Sanctum #1",
+    "mode": "PVE",
+    "faction": "sanctum_glory",
+    "character_ids": [
+      "support-死亡女神-海拉",
+      "support-湖中仙女-薇薇安",
+      "warrior-四聖-青龍",
+      "guard-四聖-玄武"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pve-sanctum-2",
+    "name": "PvE Team - Sanctum #2",
+    "mode": "PVE",
+    "faction": "sanctum_glory",
+    "character_ids": [
+      "support-死亡女神-海拉",
+      "warrior-四聖-青龍",
+      "support-湖中仙女-薇薇安",
+      "guard-四聖-玄武"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pve-spirit-3",
+    "name": "PvE Team - Spirit #3",
+    "mode": "PVE",
+    "faction": "wild_spirit",
+    "character_ids": [
+      "ranger-緋刃劍魂-荊",
+      "mage-詭計之神-洛基",
+      "warrior-四聖-青龍"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pvp-arcane-2",
+    "name": "PvP Team - Arcane #2",
+    "mode": "PVP",
+    "faction": "arcane_wisdom",
+    "character_ids": [
+      "support-湖中仙女-薇薇安",
+      "warrior-四聖-青龍",
+      "guard-四聖-玄武"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pvp-sanctum-1",
+    "name": "PvP Team - Sanctum #1",
+    "mode": "PVP",
+    "faction": "sanctum_glory",
+    "character_ids": [
+      "support-死亡女神-海拉",
+      "support-湖中仙女-薇薇安",
+      "warrior-四聖-青龍",
+      "guard-四聖-玄武"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pvp-sanctum-2",
+    "name": "PvP Team - Sanctum #2",
+    "mode": "PVP",
+    "faction": "sanctum_glory",
+    "character_ids": [
+      "support-死亡女神-海拉",
+      "warrior-四聖-青龍",
+      "support-湖中仙女-薇薇安",
+      "guard-四聖-玄武"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pvp-sanctum-6",
+    "name": "PvP Team - Sanctum #6",
+    "mode": "PVP",
+    "faction": "sanctum_glory",
+    "character_ids": [
+      "support-死亡女神-海拉",
+      "warrior-亂世魔王-瞳",
+      "support-湖中仙女-薇薇安"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pvp-spirit-2",
+    "name": "PvP Team - Spirit #2",
+    "mode": "PVP",
+    "faction": "wild_spirit",
+    "character_ids": [
+      "ranger-緋刃劍魂-荊",
+      "warrior-四聖-青龍",
+      "mage-詭計之神-洛基"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pve-sanctum-8",
+    "name": "Sanctum Glory — PvE 8",
+    "mode": "PVE",
+    "faction": "sanctum_glory",
+    "character_ids": [
+      "support-湖中仙女-薇薇安",
+      "assassin-無雙劍豪-凜",
+      "warrior-亂世魔王-瞳",
+      "support-死亡女神-海拉"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  },
+  {
+    "id": "hideout-team-pve-sanctum-9",
+    "name": "Sanctum Glory — PvE 9",
+    "mode": "PVE",
+    "faction": "sanctum_glory",
+    "character_ids": [
+      "support-死亡女神-海拉",
+      "warrior-亂世魔王-瞳",
+      "support-湖中仙女-薇薇安"
+    ],
+    "source": "Dragon Companion",
+    "source_url": "https://www.dragoncompanion.com/zh-Hant/teams/"
+  }
+]

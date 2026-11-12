@@ -16,6 +16,7 @@
 - 詳細資料支援搜尋目前角色的技能與敘述
 - 工具列可儲存與載入擁有角色清單
 - GameKee、TapTap 與台服公告資料匯入工具
+- 台服官方公告每日檢查與角色資料自動更新，更新前會建立本機備份
 
 ## 執行
 
@@ -39,6 +40,14 @@ python .\tools\import_taptap_skills.py
 
 角色資料位於 `src/dragon_team_builder/data/characters.json`。匯入前請先備份資料檔，並確認來源內容完整。
 
+執行檔執行時，使用者更新後的角色資料會保存於：
+
+```text
+%LOCALAPPDATA%\DragonTeamBuilder\data\
+```
+
+自動更新前的角色資料備份會保存於該目錄下的 `backups` 子目錄。
+
 ## 資料來源
 
 - 台服官方公告：https://sod.game-beans.com/jx/sodNotice/index.html
@@ -56,4 +65,3 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed `
   --add-data ".\src\dragon_team_builder\data;dragon_team_builder\data" `
   .\src\dragon_team_builder\__main__.py
 ```
-

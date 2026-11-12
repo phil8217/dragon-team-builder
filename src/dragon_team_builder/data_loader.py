@@ -6,10 +6,20 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from .abilities import normalize_abilities
+from .abilities import classify_abilities
 from .models import Character, Skill, SourceReference
 from .quality import normalize_quality
 from .text_normalizer import to_traditional
+
+
+def _as_list(value: object) -> list:
+    """將更新資料中的單值或空值安全轉成清單。"""
+
+    if isinstance(value, list):
+        return value
+    if value is None:
+        return []
+    return [value]
 
 
 def _source(value: dict | None) -> SourceReference | None:
@@ -24,7 +34,7 @@ def load_characters(path: str | Path) -> list[Character]:
     """從 JSON 載入角色資料；格式錯誤時直接拋出明確例外。"""
 
     source_path = Path(path)
-    with source_path.open(encoding="utf-8") as file:
+    with source_path.open(encoding="utf-8-sig") as file:
         records = json.load(file)
 
     if not isinstance(records, list):
@@ -45,18 +55,22 @@ def load_characters(path: str | Path) -> list[Character]:
             "guide_notes",
         ):
             record[key] = to_traditional(record.get(key, ""))
-        record["special_functions"] = normalize_abilities([
+        original_functions = [
             to_traditional(value)
-            for value in record.get("special_functions", [])
-        ])
+            for value in _as_list(record.get("special_functions"))
+            if isinstance(value, str)
+        ]
         record["aliases"] = [
-            to_traditional(value) for value in record.get("aliases", [])
+            to_traditional(value)
+            for value in _as_list(record.get("aliases"))
+            if isinstance(value, str)
         ]
         record.setdefault("image_url", "")
         record.setdefault("image_file", "")
+        record.setdefault("official_updates", [])
         record["quality"] = normalize_quality(record.get("quality", ""))
         record["source"] = _source(record.get("source"))
-        record["skills"] = [
+        loaded_skills = [
             Skill(
                 **{
                     **skill,
@@ -65,22 +79,51 @@ def load_characters(path: str | Path) -> list[Character]:
                         skill.get("description", "")
                     ),
                     "skill_type": to_traditional(skill.get("skill_type", "")),
-                    "tags": normalize_abilities([
-                        to_traditional(tag)
-                        for tag in skill.get("tags", [])
-                    ]),
+                    "tags": classify_abilities(
+                        [
+                            to_traditional(tag)
+                            for tag in _as_list(skill.get("tags"))
+                            if isinstance(tag, str)
+                        ] + [to_traditional(skill.get("name", ""))],
+                        to_traditional(skill.get("description", "")),
+                    ),
                     "metrics": [
                         to_traditional(metric)
-                        for metric in skill.get("metrics", [])
+                        for metric in _as_list(skill.get("metrics"))
+                        if isinstance(metric, str)
                     ],
                     "sources": [
                         _source(source)
-                        for source in skill.get("sources", [])
+                        for source in _as_list(skill.get("sources"))
+                        if isinstance(source, dict)
                     ],
                 }
             )
-            for skill in record.get("skills", [])
+            for skill in _as_list(record.get("skills"))
+            if isinstance(skill, dict)
         ]
+        record["skills"] = loaded_skills
+        classified_functions: list[str] = []
+        for value in original_functions:
+            description = " ".join(
+                skill.description
+                for skill in loaded_skills
+                if (
+                    value in skill.name
+                    or value in skill.description
+                    or (
+                        value == "時間暫停"
+                        and "時間停滯" in skill.description
+                    )
+                )
+            )
+            classified_functions.extend(
+                classify_abilities([value], description)
+            )
+        for tag in (tag for skill in loaded_skills for tag in skill.tags):
+            if tag not in classified_functions:
+                classified_functions.append(tag)
+        record["special_functions"] = list(dict.fromkeys(classified_functions))
         characters.append(Character(**record))
     return characters
 

@@ -19,4 +19,8 @@ dragon-team-builder = "dragon_team_builder.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-dragon_team_builder = ["data/*.json"]
+dragon_team_builder = [
+    "data/*.json",
+    "data/images/*.webp",
+    "data/factions/*.webp",
+]

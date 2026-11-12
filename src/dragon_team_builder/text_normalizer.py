@@ -13,4 +13,5 @@ def to_traditional(value: str) -> str:
         _CONVERTER.convert(value)
         .replace("祕技", "秘技")
         .replace("麻痹", "麻痺")
+        .replace("羣", "群")
     )

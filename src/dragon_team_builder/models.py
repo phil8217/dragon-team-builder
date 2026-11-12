@@ -48,6 +48,7 @@ class Character:
     tier: str = ""
     guide_notes: str = ""
     source: SourceReference | None = None
+    official_updates: list[dict] = field(default_factory=list)
 
     @property
     def factions(self) -> list[str]:

@@ -14,3 +14,5 @@ dist/
 .env
 .env.*
 
+# Local user settings
+owned_characters.json
