@@ -244,7 +244,7 @@ async function loadData() {
     const versionResponse = await fetch("./data/data_version.json");
     const version = versionResponse.ok ? await versionResponse.json() : {};
     state.version = version;
-    const noticeResponse = await fetch("./data/official_maintenance_notices.json");
+    const noticeResponse = await fetch("./data/official_maintenance_notices.json?v=2026.11.19");
     state.officialNoticeData = noticeResponse.ok ? await noticeResponse.json() : {};
     $("#data-version").textContent = `資料版本：${version.version || version.updated_at || "未知"}`;
     if (!state.teams[state.activeTeam]) state.activeTeam = Object.keys(state.teams)[0] || "隊伍 1";
