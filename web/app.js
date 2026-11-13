@@ -227,7 +227,7 @@ function createCombo({ items, firstLabel, searchable = false, placeholder = "", 
       close();
     }
   });
-  list.addEventListener("mousedown", (event) => {
+  list.addEventListener("pointerdown", (event) => {
     const option = event.target.closest(".combo-option");
     if (!option) return;
     event.preventDefault();
@@ -289,7 +289,9 @@ function createFilterPanel(target, includeOwned = false) {
   };
   const factionCombo = createCombo({
     firstLabel: "全部陣營",
-    items: [...new Set(state.characters.flatMap(factions))].sort().map((name) => ({ value: name, label: factionDisplay(name), icon: factionPath(name) })),
+    items: Object.keys(FACTIONS)
+      .sort(compareStroke)
+      .map((name) => ({ value: name, label: factionDisplay(name), icon: factionPath(name) })),
     onChange: (value) => { filters.faction = value; updateElementFilter(); refresh(target); },
   });
   root.querySelector("[data-faction-combo]").append(factionCombo);
