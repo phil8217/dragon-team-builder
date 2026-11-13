@@ -455,6 +455,59 @@ function renderTeamSelectors() {
   $("#team-selector").onchange = () => { state.activeTeam = $("#team-selector").value; localStorage.setItem(STORAGE.activeTeam, state.activeTeam); state.selectedTeamPosition = null; renderTeam(); };
 }
 function activePositions() { return state.teams[state.activeTeam] || (state.teams[state.activeTeam] = Array(TEAM_POSITIONS).fill(null)); }
+function swapTeamPositions(source, target) {
+  if (source === target) return;
+  const positions = activePositions();
+  const sourceItem = character(positions[source]);
+  const targetItem = character(positions[target]);
+  if (sourceItem && !allowedPositions(sourceItem.class_name).has(target)) {
+    setStatus(`${sourceItem.class_name}不能站在${positionRow(target)}。`);
+    return;
+  }
+  if (targetItem && !allowedPositions(targetItem.class_name).has(source)) {
+    setStatus(`${targetItem.class_name}不能站在${positionRow(source)}。`);
+    return;
+  }
+  [positions[source], positions[target]] = [positions[target], positions[source]];
+  state.selectedTeamPosition = target;
+  saveTeam();
+  renderTeam();
+  renderList("team");
+  renderDetails("team");
+}
+function bindTeamDrag() {
+  let source = null;
+  let moved = false;
+  let startX = 0;
+  let startY = 0;
+  $all("[data-position]", $("#team-grid")).forEach((button) => {
+    button.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 && event.pointerType !== "touch") return;
+      source = Number(button.dataset.position);
+      moved = false;
+      startX = event.clientX;
+      startY = event.clientY;
+      button.setPointerCapture?.(event.pointerId);
+      button.classList.add("dragging");
+    });
+    button.addEventListener("pointermove", (event) => {
+      if (source === null) return;
+      if (Math.hypot(event.clientX - startX, event.clientY - startY) > 8) moved = true;
+    });
+    button.addEventListener("pointerup", (event) => {
+      if (source === null) return;
+      const targetButton = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-position]");
+      const target = targetButton ? Number(targetButton.dataset.position) : source;
+      button.classList.remove("dragging");
+      if (moved && target !== source) swapTeamPositions(source, target);
+      source = null;
+    });
+    button.addEventListener("pointercancel", () => {
+      source = null;
+      button.classList.remove("dragging");
+    });
+  });
+}
 function renderTeam() {
   renderTeamSelectors();
   const positions = activePositions();
@@ -470,6 +523,7 @@ function renderTeam() {
     renderTeam();
     renderDetails("team");
   }));
+  bindTeamDrag();
   const members = positions.map(character).filter(Boolean);
   $("#team-analysis").innerHTML = members.length ? `<p>目前隊伍：${members.map((item) => `${esc(item.name)}（${esc(item.class_name)}）`).join("、")}</p><p>人數：${members.length} / ${MAX_TEAM_SIZE}</p>` : "<p>尚未組成隊伍。</p>";
   if (members.length) setStatus(`目前隊伍「${state.activeTeam}」：${members.length} / 6 人`);

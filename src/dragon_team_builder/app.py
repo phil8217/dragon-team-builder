@@ -1222,6 +1222,58 @@ class EnemyTeamDialog(QDialog):
         ]
 
 
+class TeamPositionButton(QPushButton):
+    """可點擊並可拖曳交換位置的隊伍格。"""
+
+    position_dropped = Signal(int, int)
+
+    def __init__(self, position: int, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.position = position
+        self._press_position = None
+        self._dragging = False
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._press_position = event.position().toPoint()
+            self._dragging = False
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event) -> None:
+        if (
+            self._press_position is not None
+            and not self._dragging
+            and (
+                event.position().toPoint() - self._press_position
+            ).manhattanLength() >= QApplication.startDragDistance()
+        ):
+            self._dragging = True
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event) -> None:
+        if (
+            self._dragging
+            and event.button() == Qt.MouseButton.LeftButton
+        ):
+            target = self.window().childAt(event.globalPosition().toPoint())
+            while target is not None and not isinstance(
+                target,
+                TeamPositionButton,
+            ):
+                target = target.parentWidget()
+            if isinstance(target, TeamPositionButton):
+                self.position_dropped.emit(self.position, target.position)
+            self.unsetCursor()
+            self._press_position = None
+            self._dragging = False
+            return
+        self.unsetCursor()
+        self._press_position = None
+        self._dragging = False
+        super().mouseReleaseEvent(event)
+
+
 class MainWindow(QMainWindow):
     """角色資料與隊伍組成主視窗。"""
 
@@ -1800,13 +1852,14 @@ class MainWindow(QMainWindow):
         self.team_grid = QGridLayout()
         self.team_position_buttons: list[QPushButton] = []
         for position in range(TEAM_POSITION_COUNT):
-            button = QPushButton()
+            button = TeamPositionButton(position)
             button.setMinimumSize(120, 70)
             button.setIconSize(QSize(56, 56))
             button.clicked.connect(
                 lambda _checked=False, index=position:
                 self._select_team_position(index)
             )
+            button.position_dropped.connect(self._swap_team_positions)
             self.team_position_buttons.append(button)
             self.team_grid.addWidget(button, position // 3, position % 3)
         team_layout.addLayout(self.team_grid)
@@ -2804,6 +2857,18 @@ class MainWindow(QMainWindow):
             None,
         )
         self.team_details.show_character(character)
+        self._refresh_team_grid()
+
+    def _swap_team_positions(self, source: int, target: int) -> None:
+        if source == target:
+            return
+        self.team_positions[source], self.team_positions[target] = (
+            self.team_positions[target],
+            self.team_positions[source],
+        )
+        self.selected_team_position = target
+        self._save_current_team()
+        self._save_teams_settings()
         self._refresh_team_grid()
 
     def _refresh_team_grid(self) -> None:
