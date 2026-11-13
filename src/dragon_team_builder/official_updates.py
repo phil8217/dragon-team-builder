@@ -21,6 +21,25 @@ NOTICE_TITLE_KEYWORDS = ("維護", "更新")
 MAINTENANCE_CATALOG_PATH = (
     Path(__file__).resolve().parent / "data" / "official_maintenance_notices.json"
 )
+SKILL_TYPE_ORDER = {
+    "天賦": 0,
+    "奧義": 1,
+    "絕技": 2,
+    "秘技": 3,
+    "特技": 4,
+}
+
+
+def sort_skill_records(skills: list[dict]) -> list[dict]:
+    """依遊戲技能顯示順序排序，未知類型則保留在最後。"""
+
+    return sorted(
+        skills,
+        key=lambda skill: SKILL_TYPE_ORDER.get(
+            skill.get("skill_type", ""),
+            len(SKILL_TYPE_ORDER),
+        ),
+    )
 
 
 class _TextParser(HTMLParser):
@@ -321,6 +340,13 @@ def apply_official_updates(
                 })
                 changed = True
             if changed and record.get("id") not in updated:
+                updated.append(record.get("id", ""))
+    for record in payload:
+        skills = record.get("skills", [])
+        sorted_skills = sort_skill_records(skills)
+        if sorted_skills != skills:
+            record["skills"] = sorted_skills
+            if record.get("id") not in updated:
                 updated.append(record.get("id", ""))
     if updated:
         character_json = json.dumps(

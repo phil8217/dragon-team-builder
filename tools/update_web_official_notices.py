@@ -23,6 +23,7 @@ from dragon_team_builder.official_updates import (
     _new_character_names,
     _notice_date,
     _skill_blocks,
+    sort_skill_records,
     _visible_text,
     apply_official_updates,
     check_official_updates,
@@ -315,6 +316,7 @@ def new_character_from_notice(
                 "metrics": [],
                 "sources": [source],
             })
+        skill_records = sort_skill_records(skill_records)
         special = list(dict.fromkeys([*special, *discovered_terms]))
         for skill in skill_records:
             skill["tags"] = list(special)
@@ -349,6 +351,12 @@ def main() -> None:
     if not isinstance(characters, list):
         raise ValueError("角色資料必須是 JSON 陣列。")
     characters_changed = merge_translation_duplicates(characters)
+    for character in characters:
+        skills = character.get("skills", [])
+        sorted_skills = sort_skill_records(skills)
+        if sorted_skills != skills:
+            character["skills"] = sorted_skills
+            characters_changed = True
 
     existing = load_existing_notices()
     with tempfile.TemporaryDirectory() as temporary_directory:
