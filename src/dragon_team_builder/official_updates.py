@@ -362,6 +362,12 @@ def _skill_blocks(text: str) -> list[tuple[str, str, str]]:
         r"^(天賦|奧義|絕技|秘技|特技)\s*[-－—:：]+\s*(.*)$"
     )
     for line in text.splitlines():
+        stripped = line.strip()
+        if current is not None and (
+            stripped.startswith(("限定召喚卡池", "活動-", "活動－", "★其他", "【儲值推薦】", "新聞列表"))
+            or stripped.startswith("----")
+        ):
+            break
         match = pattern.match(line.strip())
         if match:
             if current is not None:
@@ -372,8 +378,11 @@ def _skill_blocks(text: str) -> list[tuple[str, str, str]]:
                 ))
             current = (match.group(1), match.group(2).strip(), [])
         elif current is not None:
-            if line.strip() and not line.startswith("★★"):
-                current[2].append(line.strip())
+            if stripped and not line.startswith("★★"):
+                if not current[1]:
+                    current = (current[0], stripped, current[2])
+                else:
+                    current[2].append(stripped)
     if current is not None:
         blocks.append((
             current[0],
