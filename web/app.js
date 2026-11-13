@@ -555,12 +555,25 @@ function renderSources(version = {}, officialNoticeData = {}) {
 }
 
 function showModal(title, content, onReady) {
-  $("#modal-root").innerHTML = `<div class="modal-backdrop"><div class="modal"><div class="modal-header"><h2>${esc(title)}</h2><button class="modal-close" data-close>×</button></div><div class="modal-body">${content}</div></div></div>`;
-  $all("[data-close]").forEach((button) => button.addEventListener("click", closeModal));
-  $(".modal-backdrop").addEventListener("click", (event) => { if (event.target.classList.contains("modal-backdrop")) closeModal(); });
-  if (onReady) onReady($(".modal"));
+  const root = $("#modal-root");
+  root.innerHTML = `<div class="modal-backdrop"><div class="modal"><div class="modal-header"><h2>${esc(title)}</h2><button class="modal-close" data-close>×</button></div><div class="modal-body">${content}</div></div></div>`;
+  const backdrop = root.querySelector(".modal-backdrop");
+  $all("[data-close]", backdrop).forEach((button) => button.addEventListener("click", () => closeModal(backdrop)));
+  backdrop.addEventListener("click", (event) => { if (event.target === backdrop) closeModal(backdrop); });
+  if (onReady) onReady(backdrop.querySelector(".modal"));
 }
-function closeModal() { $("#modal-root").innerHTML = ""; }
+function showNestedModal(title, content, onReady) {
+  const root = $("#modal-root");
+  root.insertAdjacentHTML("beforeend", `<div class="modal-backdrop"><div class="modal"><div class="modal-header"><h2>${esc(title)}</h2><button class="modal-close" data-close>×</button></div><div class="modal-body">${content}</div></div></div>`);
+  const backdrop = root.lastElementChild;
+  $all("[data-close]", backdrop).forEach((button) => button.addEventListener("click", () => closeModal(backdrop)));
+  backdrop.addEventListener("click", (event) => { if (event.target === backdrop) closeModal(backdrop); });
+  if (onReady) onReady(backdrop.querySelector(".modal"));
+}
+function closeModal(backdrop = null) {
+  if (backdrop) backdrop.remove();
+  else $("#modal-root").innerHTML = "";
+}
 function ownedManager() {
   let selectedIds = new Set(state.owned);
   const profileOptions = Object.keys(state.ownedProfiles).sort(compareStroke).map((name) => `<option>${esc(name)}</option>`).join("");
@@ -760,7 +773,7 @@ document.addEventListener("click", (event) => {
   if (!button) return;
   const name = button.dataset.mechanic;
   const description = state.mechanics[name];
-  if (description) showModal(`${name}說明`, `<p>${esc(description)}</p>`);
+  if (description) showNestedModal(`${name}說明`, `<p>${esc(description)}</p>`);
 });
 $all(".tab").forEach((tab) => tab.addEventListener("click", () => { $all(".tab, .tab-panel").forEach((element) => element.classList.remove("is-active")); tab.classList.add("is-active"); $(`#${tab.dataset.tab}-tab`).classList.add("is-active"); }));
 $all("[data-action]").forEach((button) => button.addEventListener("click", () => {
