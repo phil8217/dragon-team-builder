@@ -16,6 +16,7 @@
 - 公告資料有變更時自動提交 `web/data/official_maintenance_notices.json` 並重新部署 GitHub Pages。
 - 網頁版「檢查官方更新」按鈕改為說明自動檢查與部署流程；排程不會未經審核直接修改角色技能資料。
 - Pages 部署 workflow 新增 `workflow_run` 觸發，確保 Actions 自動提交的公告變更也會部署。
+- 資料來源頁面新增官網上次檢查日期與時間，使用台灣時區顯示。
 
 ## 2026-11-12 網頁版技能能力分類對齊
 

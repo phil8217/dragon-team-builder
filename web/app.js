@@ -28,6 +28,7 @@ const GOOGLE_FORM_URL = "https://forms.gle/2ZaLSUfowj9iR5g59";
 const state = {
   characters: [],
   version: {},
+  officialNoticeData: {},
   owned: new Set(readJson(STORAGE.owned, [])),
   ownedProfiles: readJson(STORAGE.ownedProfiles, null),
   activeOwnedProfile: localStorage.getItem(STORAGE.activeOwnedProfile) || "預設",
@@ -243,6 +244,8 @@ async function loadData() {
     const versionResponse = await fetch("./data/data_version.json");
     const version = versionResponse.ok ? await versionResponse.json() : {};
     state.version = version;
+    const noticeResponse = await fetch("./data/official_maintenance_notices.json");
+    state.officialNoticeData = noticeResponse.ok ? await noticeResponse.json() : {};
     $("#data-version").textContent = `資料版本：${version.version || version.updated_at || "未知"}`;
     if (!state.teams[state.activeTeam]) state.activeTeam = Object.keys(state.teams)[0] || "隊伍 1";
     renderAll();
@@ -502,9 +505,9 @@ function renderEnemyAnalysis() {
   $("#enemy-analysis").innerHTML = `<h3>敵方已知威脅</h3><p><b>控制：</b>${esc(controls.join("、") || "無")}<br><b>增益：</b>${esc(benefits.join("、") || "無")}<br><b>減益：</b>${esc(debuffs.join("、") || "無")}<br><b>治療相關：</b>${esc(healing.join("、") || "無")}</p><p><b>建議反制需求：</b>${esc([...new Set(requirements)].join("、") || "暫無")}</p>`;
 }
 
-function renderSources(version = {}) {
+function renderSources(version = {}, officialNoticeData = {}) {
   const known = [["筱宮璃紗、MDM、佳里等製作團隊", "https://reurl.cc/0Kq5dk"], ["GameKee", "https://www.gamekee.com/lhlr/"], ["TapTap", "https://www.taptap.cn/"], ["Dragon Companion", "https://www.dragoncompanion.com/"], ["台服官方公告", "https://sod.game-beans.com/jx/sodNotice/index.html"]];
-  $("#sources-content").innerHTML = `<h3>資料版本</h3><p><b>版本：</b>${esc(version.version || "未知")}<br><b>更新日期：</b>${esc(version.updated_at || "未知")}<br><b>角色數：</b>${state.characters.length}</p>${known.map(([name, url]) => `<p><b>${esc(name)}</b><br><a href="${url}" target="_blank" rel="noreferrer">${esc(url)}</a></p>`).join("")}`;
+  $("#sources-content").innerHTML = `<h3>資料版本</h3><p><b>版本：</b>${esc(version.version || "未知")}<br><b>更新日期：</b>${esc(version.updated_at || "未知")}<br><b>角色數：</b>${state.characters.length}<br><b>官網上次檢查：</b>${esc(officialNoticeData.last_checked_at || officialNoticeData.accessed_at || "未知")}</p>${known.map(([name, url]) => `<p><b>${esc(name)}</b><br><a href="${url}" target="_blank" rel="noreferrer">${esc(url)}</a></p>`).join("")}`;
 }
 
 function showModal(title, content, onReady) {
@@ -689,7 +692,7 @@ async function showOfficialReport() {
 function renderAll() {
   $("#browser-filters").replaceChildren(createFilterPanel("browser"));
   $("#team-filters").replaceChildren(createFilterPanel("team"));
-  refresh("browser"); refresh("team"); renderTeam(); renderEnemyBoard(); renderSources(state.version);
+  refresh("browser"); refresh("team"); renderTeam(); renderEnemyBoard(); renderSources(state.version, state.officialNoticeData);
 }
 
 $all(".tab").forEach((tab) => tab.addEventListener("click", () => { $all(".tab, .tab-panel").forEach((element) => element.classList.remove("is-active")); tab.classList.add("is-active"); $(`#${tab.dataset.tab}-tab`).classList.add("is-active"); }));

@@ -6,7 +6,9 @@ import json
 import os
 import sys
 import tempfile
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -68,6 +70,9 @@ def main() -> None:
     payload = {
         "source": "https://sod.game-beans.com/jx/sodNotice/index.html",
         "accessed_at": report.get("checked_at", ""),
+        "last_checked_at": datetime.now(
+            ZoneInfo("Asia/Taipei")
+        ).strftime("%Y-%m-%d %H:%M:%S"),
         "index_pages": 2,
         "notice_count": len(notices),
         "notices": notices,

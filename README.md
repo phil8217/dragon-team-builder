@@ -96,3 +96,4 @@ GitHub repository 的 Actions 頁面手動執行這個 workflow。瀏覽器本�
 避免跨來源限制與靜態頁面無法安全保存更新資料的問題。
 公告更新 workflow 完成後，部署 workflow 會透過 `workflow_run` 事件重新發布網頁，
 避免 GitHub Actions 使用 `GITHUB_TOKEN` 提交的變更無法再次觸發一般 push workflow。
+資料來源頁面會顯示官網上次檢查時間，格式為台灣時間 `YYYY-MM-DD HH:MM:SS`。
