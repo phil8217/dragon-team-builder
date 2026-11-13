@@ -91,7 +91,8 @@ python -m http.server 8000
 網頁版資料與桌面版目前由同一份角色資料產生。台服官方公告由
 [update-official-notices.yml](./.github/workflows/update-official-notices.yml) 每日台灣時間
 上午 9 點抓取官方公告首頁與第二頁；有公告資料變更時，GitHub Actions 會自動提交
-`web/data/official_maintenance_notices.json` 並重新部署 GitHub Pages。也可以在
+公告清單、角色資料與資料版本，提交 `web/data/official_maintenance_notices.json`、
+`web/data/characters.json` 與 `web/data/data_version.json`，並重新部署 GitHub Pages。也可以在
 GitHub repository 的 Actions 頁面手動執行這個 workflow。瀏覽器本身不直接抓取官方網站，
 避免跨來源限制與靜態頁面無法安全保存更新資料的問題。
 公告更新 workflow 完成後，部署 workflow 會透過 `workflow_run` 事件重新發布網頁，

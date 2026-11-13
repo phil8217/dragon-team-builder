@@ -238,13 +238,14 @@ function createCombo({ items, firstLabel, searchable = false, placeholder = "", 
 
 async function loadData() {
   try {
-    const response = await fetch("./data/characters.json?v=2026.11.16");
+    const cacheBust = Date.now();
+    const response = await fetch(`./data/characters.json?v=${cacheBust}`);
     if (!response.ok) throw new Error(`角色資料載入失敗（HTTP ${response.status}）`);
     state.characters = await response.json();
-    const versionResponse = await fetch("./data/data_version.json");
+    const versionResponse = await fetch(`./data/data_version.json?v=${cacheBust}`);
     const version = versionResponse.ok ? await versionResponse.json() : {};
     state.version = version;
-    const noticeResponse = await fetch("./data/official_maintenance_notices.json?v=2026.11.19");
+    const noticeResponse = await fetch(`./data/official_maintenance_notices.json?v=${cacheBust}`);
     state.officialNoticeData = noticeResponse.ok ? await noticeResponse.json() : {};
     $("#data-version").textContent = `資料版本：${version.version || version.updated_at || "未知"}`;
     if (!state.teams[state.activeTeam]) state.activeTeam = Object.keys(state.teams)[0] || "隊伍 1";

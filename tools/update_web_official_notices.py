@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import tempfile
 from datetime import datetime
@@ -14,14 +15,40 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from dragon_team_builder.official_updates import check_official_updates
+from dragon_team_builder.official_updates import (
+    _fetch,
+    _new_character_names,
+    _notice_date,
+    _skill_blocks,
+    _visible_text,
+    apply_official_updates,
+    check_official_updates,
+)
 
 
-CHARACTER_DATA = ROOT / "src" / "dragon_team_builder" / "data" / "characters.json"
+WEB_CHARACTER_DATA = ROOT / "web" / "data" / "characters.json"
+WEB_VERSION_DATA = ROOT / "web" / "data" / "data_version.json"
 WEB_NOTICE_DATA = ROOT / "web" / "data" / "official_maintenance_notices.json"
+CLASS_NAMES = ("守衛", "牧師", "刺客", "戰士", "射手", "法師")
+FACTION_NAMES = {
+    "曠野之靈": "曠野",
+    "聖堂榮光": "聖堂",
+    "彼岸再臨": "彼岸",
+    "幻境秘影": "幻境",
+    "元素迴響": "元素",
+    "奧術智慧": "奧術",
+}
+CLASS_PREFIXES = {
+    "守衛": "guardian",
+    "牧師": "support",
+    "刺客": "assassin",
+    "戰士": "warrior",
+    "射手": "ranger",
+    "法師": "mage",
+}
 
 
-def atomic_write_json(path: Path, payload: dict) -> None:
+def atomic_write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     content = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     with tempfile.NamedTemporaryFile(
@@ -49,8 +76,119 @@ def load_existing_notices() -> dict:
     return payload
 
 
+def normalized_name(name: str) -> str:
+    return re.sub(r"\s+", " ", name.replace("‧", " • ").replace("・", " • ")).strip()
+
+
+def existing_character_names(character: dict) -> set[str]:
+    name = normalized_name(character.get("name", ""))
+    aliases = {normalized_name(alias) for alias in character.get("aliases", [])}
+    aliases.discard("")
+    return {name, *aliases} - {""}
+
+
+def character_id(name: str, class_name: str, records: list[dict]) -> str:
+    prefix = CLASS_PREFIXES.get(class_name, "unknown")
+    base = f"{prefix}-{normalized_name(name).replace(' • ', '-')}"
+    candidate = base
+    suffix = 2
+    used = {record.get("id") for record in records}
+    while candidate in used:
+        candidate = f"{base}-{suffix}"
+        suffix += 1
+    return candidate
+
+
+def new_character_from_notice(
+    content: str,
+    url: str,
+    records: list[dict],
+) -> list[dict]:
+    text = _visible_text(content)
+    lines = text.splitlines()
+    names = _new_character_names(text)
+    created = []
+    for raw_name in names:
+        name = normalized_name(raw_name)
+        if any(name in existing_character_names(record) for record in records + created):
+            continue
+        marker = next(
+            (index for index, line in enumerate(lines) if raw_name in line),
+            None,
+        )
+        if marker is None:
+            continue
+        block = lines[marker:marker + 14]
+        quality = next(
+            (line.split("：", 1)[1].strip() for line in block if line.startswith("品質：")),
+            "未知",
+        )
+        class_name = next(
+            (value for value in CLASS_NAMES if any(line == f"職業：{value}" for line in block)),
+            "未分類",
+        )
+        factions = next(
+            (
+                [FACTION_NAMES.get(value.strip(), value.strip()) for value in line.split("：", 1)[1].split("、")]
+                for line in block
+                if line.startswith("陣營：")
+            ),
+            [],
+        )
+        special = []
+        if marker + 1 < len(lines) and "：" not in lines[marker + 1]:
+            special = [item for item in lines[marker + 1].split() if item]
+        source = {
+            "kind": "official",
+            "title": f"台服官方公告：{_notice_date(url)} 維護更新",
+            "url": url,
+            "accessed_at": datetime.now(ZoneInfo("Asia/Taipei")).date().isoformat(),
+            "confidence": "medium",
+        }
+        image_match = re.search(
+            rf"{re.escape(raw_name)}.*?<img[^>]+src=[\"']([^\"']+)",
+            content,
+            flags=re.S,
+        )
+        skills = [
+            {
+                "name": skill_name,
+                "description": description,
+                "skill_type": skill_type,
+                "tags": list(special),
+                "metrics": [],
+                "sources": [source],
+            }
+            for skill_type, skill_name, description in _skill_blocks(text)
+        ]
+        aliases = [
+            part.strip()
+            for part in re.split(r"\s*•\s*", name)
+            if part.strip() and part.strip() != name
+        ]
+        created.append(
+            {
+                "id": character_id(name, class_name, records + created),
+                "name": name,
+                "class_name": class_name,
+                "main_faction": factions[0] if factions else "未分類",
+                "secondary_faction": factions[1] if len(factions) > 1 else "",
+                "skills": skills,
+                "special_functions": list(special),
+                "aliases": aliases,
+                "image_url": image_match.group(1) if image_match else "",
+                "quality": quality,
+                "tier": "",
+                "guide_notes": f"台服 {source['accessed_at']} 官方公告新增角色。",
+                "source": source,
+                "official_updates": [],
+            }
+        )
+    return created
+
+
 def main() -> None:
-    characters = json.loads(CHARACTER_DATA.read_text(encoding="utf-8-sig"))
+    characters = json.loads(WEB_CHARACTER_DATA.read_text(encoding="utf-8-sig"))
     if not isinstance(characters, list):
         raise ValueError("角色資料必須是 JSON 陣列。")
 
@@ -66,6 +204,38 @@ def main() -> None:
         )
         report = check_official_updates(characters, temporary_path)
 
+    changed_urls = [
+        notice["url"]
+        for notice in report.get("changed_notices", [])
+        if notice.get("url")
+    ]
+    if changed_urls:
+        with tempfile.TemporaryDirectory() as backup_directory:
+            apply_official_updates(
+                characters,
+                changed_urls,
+                WEB_CHARACTER_DATA,
+                WEB_VERSION_DATA,
+                backup_directory,
+            )
+        characters = json.loads(WEB_CHARACTER_DATA.read_text(encoding="utf-8-sig"))
+    created = []
+    for notice in report.get("changed_notices", []):
+        if not notice.get("new_characters"):
+            continue
+        content = _fetch(notice["url"])
+        created.extend(new_character_from_notice(content, notice["url"], characters + created))
+    if created:
+        characters.extend(created)
+        atomic_write_json(WEB_CHARACTER_DATA, characters)
+        version = json.loads(WEB_VERSION_DATA.read_text(encoding="utf-8"))
+        version.update({
+            "version": datetime.now(ZoneInfo("Asia/Taipei")).date().isoformat(),
+            "updated_at": datetime.now(ZoneInfo("Asia/Taipei")).date().isoformat(),
+            "character_count": len(characters),
+        })
+        atomic_write_json(WEB_VERSION_DATA, version)
+
     notices = report.get("notices", [])
     payload = {
         "source": "https://sod.game-beans.com/jx/sodNotice/index.html",
@@ -80,7 +250,8 @@ def main() -> None:
     atomic_write_json(WEB_NOTICE_DATA, payload)
     print(
         f"官方公告檢查完成：{len(notices)} 筆公告，"
-        f"本次變更 {len(report.get('changed_notices', []))} 筆。"
+        f"本次變更 {len(report.get('changed_notices', []))} 筆，"
+        f"自動新增角色 {len(created)} 名。"
     )
 
 
