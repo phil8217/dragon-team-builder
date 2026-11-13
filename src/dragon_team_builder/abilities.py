@@ -279,17 +279,22 @@ def _effect_scopes(text: str, keyword: str) -> list[str]:
     clauses = _effect_clauses(text, keyword)
     if not clauses:
         return ["單體"]
-    return list(dict.fromkeys(_scope(clause) for clause in clauses))
+    scopes = []
+    for clause in clauses:
+        scope = _scope(clause)
+        if scope == "單體" and re.search(
+            r"全體|全隊|所有我方|所有敵方|我方全員|群|羣|範圍|附近|周圍|多名|多個|敵方單位|我方單位",
+            text,
+        ):
+            scope = _scope(text)
+        scopes.append(scope)
+    return list(dict.fromkeys(scopes))
 
 
 def classify_ability(value: str, description: str = "") -> list[str]:
     """將原始能力依敵我方向、效果與範圍轉成可篩選的分類。"""
 
     text = f"{value} {description}"
-    if "元素反應" in text or any(
-        mechanic in text for mechanic in ELEMENTAL_MECHANICS
-    ):
-        return []
     results: list[str] = []
     scope_source = description or value
     for keyword, effect in _CONTROL_EFFECTS:
@@ -318,6 +323,8 @@ def classify_ability(value: str, description: str = "") -> list[str]:
             for scope in _effect_scopes(scope_source, "驅散")
         )
 
+    if re.search(r"範圍內.*(?:傷害|攻擊)|每個敵方單位.*(?:傷害|攻擊)", text):
+        results.append(f"輸出-範圍-{_scope(text)}")
     if "範圍輸出" in text or "多段打擊" in text:
         keyword = "範圍輸出" if "範圍輸出" in text else "多段打擊"
         results.extend(
