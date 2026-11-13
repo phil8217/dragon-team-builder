@@ -76,6 +76,7 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed `
 - 隊伍組成器候選清單、九宮格、多隊伍與隊伍分析
 - 敵隊分析雙九宮格、反制需求與推薦隊伍
 - 台服官方更新公告清單
+- 官方新增角色圖片會下載並保存於 `web/data/images/`，網頁版優先使用本地圖片
 - 角色資料與隊伍資料保存於瀏覽器 LocalStorage
 
 本機預覽：
@@ -92,7 +93,7 @@ python -m http.server 8000
 [update-official-notices.yml](./.github/workflows/update-official-notices.yml) 每日台灣時間
 上午 9 點抓取官方公告首頁與第二頁；有公告資料變更時，GitHub Actions 會自動提交
 公告清單、角色資料與資料版本，提交 `web/data/official_maintenance_notices.json`、
-`web/data/characters.json` 與 `web/data/data_version.json`，並重新部署 GitHub Pages。也可以在
+`web/data/characters.json`、`web/data/data_version.json` 與新增的角色圖片，並重新部署 GitHub Pages。也可以在
 GitHub repository 的 Actions 頁面手動執行這個 workflow。瀏覽器本身不直接抓取官方網站，
 避免跨來源限制與靜態頁面無法安全保存更新資料的問題。
 公告更新 workflow 完成後，部署 workflow 會透過 `workflow_run` 事件重新發布網頁，

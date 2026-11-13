@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import sys
 import tempfile
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urljoin
@@ -30,6 +32,7 @@ from dragon_team_builder.official_updates import (
 WEB_CHARACTER_DATA = ROOT / "web" / "data" / "characters.json"
 WEB_VERSION_DATA = ROOT / "web" / "data" / "data_version.json"
 WEB_NOTICE_DATA = ROOT / "web" / "data" / "official_maintenance_notices.json"
+WEB_IMAGE_DIR = ROOT / "web" / "data" / "images"
 CLASS_NAMES = ("守衛", "牧師", "刺客", "戰士", "射手", "法師")
 FACTION_NAMES = {
     "曠野之靈": "曠野",
@@ -80,6 +83,24 @@ def atomic_write_json(path: Path, payload: object) -> None:
         os.replace(temporary_path, path)
     finally:
         temporary_path.unlink(missing_ok=True)
+
+
+def download_character_image(record: dict) -> str:
+    url = record.get("image_url", "")
+    if not url:
+        return ""
+    extension = ".jpg" if ".jpg" in url.lower() else ".webp"
+    filename = hashlib.sha256(record["id"].encode("utf-8")).hexdigest()[:16] + extension
+    target = WEB_IMAGE_DIR / filename
+    if not target.exists():
+        request = urllib.request.Request(
+            url,
+            headers={"User-Agent": "DragonTeamBuilder/0.1"},
+        )
+        with urllib.request.urlopen(request, timeout=30) as response:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(response.read())
+    return f"data/images/{target.name}"
 
 
 def load_existing_notices() -> dict:
@@ -276,8 +297,7 @@ def new_character_from_notice(
             for part in re.split(r"\s*•\s*", name)
             if part.strip() and part.strip() != name
         ]
-        created.append(
-            {
+        record = {
                 "id": character_id(name, class_name, records + created),
                 "name": name,
                 "class_name": class_name,
@@ -293,7 +313,8 @@ def new_character_from_notice(
                 "source": source,
                 "official_updates": [],
             }
-        )
+        record["image_file"] = download_character_image(record)
+        created.append(record)
     return created
 
 
