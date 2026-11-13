@@ -1,0 +1,43 @@
+name: Update official notices
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: official-notices
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Crawl official notices
+        run: python tools/update_web_official_notices.py
+
+      - name: Commit changed notice data
+        shell: bash
+        run: |
+          if git diff --quiet -- web/data/official_maintenance_notices.json; then
+            echo "No official notice changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data/official_maintenance_notices.json
+          git commit -m "更新台服官方公告資料" \
+            -m "由 GitHub Actions 每日檢查台服官方公告首頁與第二頁。" \
+            -m "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+          git push

@@ -1,5 +1,7 @@
 {
   "source": "https://sod.game-beans.com/jx/sodNotice/index.html",
+  "accessed_at": "2026-11-13",
+  "index_pages": 2,
   "notice_count": 128,
   "notices": [
     {
@@ -9,7 +11,8 @@
       "new_characters": [
         "裁命女神‧烏爾德"
       ],
-      "updates_character_values": true
+      "updates_character_values": true,
+      "content_hash": "17c9e833bd8d2ab3bea254f3b5113cb0339a18bac8927d71e7e98e0e987cb70f"
     },
     {
       "url": "https://sod.game-beans.com/jx/sodNotice/20261104/8323.html",
@@ -18,14 +21,16 @@
       "new_characters": [
         "戀歌謬斯‧艾拉托"
       ],
-      "updates_character_values": true
+      "updates_character_values": true,
+      "content_hash": "c5fcf2c9c4580bc17ed97c735989936ed3fd292585935be5fe12940cc248d398"
     },
     {
       "url": "https://sod.game-beans.com/jx/sodNotice/20261029/8317.html",
       "title": "【公告】10月29日臨時維護",
       "date": "2026-10-29",
       "new_characters": [],
-      "updates_character_values": false
+      "updates_character_values": false,
+      "content_hash": "f6f3eabc1a55ddedb00dab62f6ffaaf972094832e91eb69466037af9e49631eb"
     },
     {
       "url": "https://sod.game-beans.com/jx/sodNotice/20261027/8301.html",

@@ -672,7 +672,7 @@ function toolbarAction(action) {
   if (action === "clear-owned") { state.owned.clear(); saveOwnedProfiles(); renderAll(); }
   if (action === "export-team") download("teams.json", { version: 2, teams: state.teams, active_team: state.activeTeam });
   if (action === "import-team") loadFile($("#team-file-input"), (data) => { if (data.teams) { state.teams = data.teams; state.activeTeam = data.active_team || Object.keys(state.teams)[0]; saveTeam(); renderAll(); } });
-  if (action === "official-check") setStatus("網頁版的官方公告檢查由 GitHub Actions 執行；請重新整理頁面取得最新資料。");
+  if (action === "official-check") setStatus("GitHub Actions 每日自動檢查台服官方公告首頁與第二頁；有新資料時會自動部署，請稍後重新整理頁面。");
   if (action === "official-report") showOfficialReport();
   if (action === "report") window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer");
 }
