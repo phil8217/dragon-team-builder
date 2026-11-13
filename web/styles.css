@@ -108,8 +108,9 @@ h3 { margin: 0 0 8px; font-size: 15px; }
 .team-actions select { flex: 1; padding: 5px; }
 .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
 .team-slot, .board-slot { min-height: 86px; padding: 4px; border: 1px solid #c6cbd0; border-radius: 3px; text-align: center; cursor: pointer; }
-.team-slot { touch-action: none; user-select: none; }
+.team-slot, .board-slot { touch-action: none; user-select: none; }
 .team-slot.dragging { opacity: .6; outline: 2px dashed var(--primary); }
+.team-slot img, .board-slot img { -webkit-user-drag: none; user-select: none; }
 .team-slot.row-front, .board-slot.row-front { background: var(--front); }
 .team-slot.row-middle, .board-slot.row-middle { background: var(--middle); }
 .team-slot.row-back, .board-slot.row-back { background: var(--back); }

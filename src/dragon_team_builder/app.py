@@ -1909,7 +1909,7 @@ class MainWindow(QMainWindow):
             for column in range(3):
                 own_position = row + (2 - column) * 3
                 enemy_position = (2 - row) + column * 3
-                own_button = QPushButton()
+                own_button = TeamPositionButton(own_position)
                 enemy_button = QPushButton()
                 for button in (own_button, enemy_button):
                     button.setMinimumSize(125, 92)
@@ -1917,6 +1917,9 @@ class MainWindow(QMainWindow):
                 own_button.clicked.connect(
                     lambda _checked=False, index=own_position:
                     self._select_team_position(index)
+                )
+                own_button.position_dropped.connect(
+                    self._swap_team_positions
                 )
                 enemy_button.clicked.connect(self._open_enemy_dialog)
                 self.enemy_own_buttons.append(own_button)

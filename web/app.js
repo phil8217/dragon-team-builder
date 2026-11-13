@@ -472,6 +472,7 @@ function swapTeamPositions(source, target) {
   state.selectedTeamPosition = target;
   saveTeam();
   renderTeam();
+  renderEnemyBoard();
   renderList("team");
   renderDetails("team");
 }
@@ -513,7 +514,7 @@ function renderTeam() {
   const positions = activePositions();
   $("#team-grid").innerHTML = positions.map((id, index) => {
     const item = character(id);
-    return `<button class="team-slot ${positionClass(index)} ${state.selectedTeamPosition === index ? "selected" : ""}" data-position="${index}">${item ? (state.imagesVisible && imagePath(item) ? `<img src="${imagePath(item)}" alt="">` : "") + `<span class="slot-name">${esc(positionRow(index))}<br>${esc(item.name)}</span><span class="slot-class">${esc(item.class_name)}</span>` : `<span class="slot-name">${positionRow(index)}<br>空位</span>`}</button>`;
+    return `<button class="team-slot ${positionClass(index)} ${state.selectedTeamPosition === index ? "selected" : ""}" data-position="${index}">${item ? (state.imagesVisible && imagePath(item) ? `<img src="${imagePath(item)}" alt="" draggable="false">` : "") + `<span class="slot-name">${esc(positionRow(index))}<br>${esc(item.name)}</span><span class="slot-class">${esc(item.class_name)}</span>` : `<span class="slot-name">${positionRow(index)}<br>空位</span>`}</button>`;
   }).join("");
   $all("[data-position]", $("#team-grid")).forEach((button) => button.addEventListener("click", () => {
     state.selectedTeamPosition = Number(button.dataset.position);
@@ -581,12 +582,60 @@ function renderEnemyBoard() {
   })).sort((a, b) => a.visual - b.visual);
   $("#own-board").innerHTML = ownVisual.map(({ id, position }) => boardSlot(character(id), position, true)).join("");
   $("#enemy-board").innerHTML = enemyVisual.map(({ id, position }) => boardSlot(character(id), position, false)).join("");
+  bindBoardDrag($("#own-board"), "[data-own-position]", (source, target) => swapTeamPositions(source, target));
+  bindBoardDrag($("#enemy-board"), "[data-enemy-position]", (source, target) => {
+    if (source === target) return;
+    [state.enemy[source], state.enemy[target]] = [state.enemy[target], state.enemy[source]];
+    saveJson(STORAGE.enemy, state.enemy);
+    renderEnemyBoard();
+  });
   renderEnemyAnalysis();
+}
+function bindBoardDrag(root, selector, onDrop) {
+  let source = null;
+  let moved = false;
+  let startX = 0;
+  let startY = 0;
+  $all(selector, root).forEach((button) => {
+    button.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 && event.pointerType !== "touch") return;
+      source = Number(button.dataset.ownPosition || button.dataset.enemyPosition) ;
+      moved = false;
+      startX = event.clientX;
+      startY = event.clientY;
+      button.setPointerCapture?.(event.pointerId);
+      button.classList.add("dragging");
+    });
+    button.addEventListener("pointermove", (event) => {
+      if (source !== null && Math.hypot(event.clientX - startX, event.clientY - startY) > 8) moved = true;
+    });
+    button.addEventListener("pointerup", (event) => {
+      if (source === null) return;
+      const targetButton = document.elementFromPoint(event.clientX, event.clientY)?.closest(selector);
+      const target = targetButton ? Number(targetButton.dataset.ownPosition || targetButton.dataset.enemyPosition) : source;
+      button.classList.remove("dragging");
+      if (moved) {
+        button.dataset.dragged = "true";
+        if (target !== source) onDrop(source, target);
+      }
+      source = null;
+    });
+    button.addEventListener("click", (event) => {
+      if (button.dataset.dragged !== "true") return;
+      delete button.dataset.dragged;
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    button.addEventListener("pointercancel", () => {
+      source = null;
+      button.classList.remove("dragging");
+    });
+  });
 }
 function boardSlot(item, index, own) {
   const mobileRow = own ? Math.floor(index / 3) + 1 : 3 - Math.floor(index / 3);
   const mobileColumn = index % 3 + 1;
-  return `<button class="board-slot ${positionClass(index)}" style="--mobile-row:${mobileRow};--mobile-column:${mobileColumn}" data-slot-number="${index + 1}" ${own ? `data-own-position="${index}"` : `data-enemy-position="${index}"`}>${item ? (state.imagesVisible && imagePath(item) ? `<img src="${imagePath(item)}" alt="">` : "") + `<span class="slot-name">${esc(positionRow(index))}<br>${esc(item.name)}</span><span class="slot-class">${esc(item.class_name)}</span>` : `<span class="slot-name">${positionRow(index)}<br>空位</span>`}</button>`;
+  return `<button class="board-slot ${positionClass(index)}" style="--mobile-row:${mobileRow};--mobile-column:${mobileColumn}" data-slot-number="${index + 1}" ${own ? `data-own-position="${index}"` : `data-enemy-position="${index}"`}>${item ? (state.imagesVisible && imagePath(item) ? `<img src="${imagePath(item)}" alt="" draggable="false">` : "") + `<span class="slot-name">${esc(positionRow(index))}<br>${esc(item.name)}</span><span class="slot-class">${esc(item.class_name)}</span>` : `<span class="slot-name">${positionRow(index)}<br>空位</span>`}</button>`;
 }
 function renderEnemyAnalysis() {
   const members = state.enemy.map(character).filter(Boolean);
