@@ -43,6 +43,7 @@ const state = {
   teamFilters: {},
   imagesVisible: true,
   ownedFilter: false,
+  ownedFilterMode: "all",
 };
 
 if (!state.ownedProfiles || typeof state.ownedProfiles !== "object") {
@@ -314,6 +315,7 @@ function createFilterPanel(target, includeOwned = false) {
     const key = input.dataset.filter;
     input.addEventListener(input.type === "checkbox" ? "change" : "input", () => {
       filters[key] = input.type === "checkbox" ? input.checked : input.value;
+      if (key === "owned") filters.ownedMode = input.checked ? "owned" : "all";
       refresh(target);
     });
   });
@@ -324,13 +326,19 @@ function createFilterPanel(target, includeOwned = false) {
 function filterMatches(item, filters) {
   const searchable = [item.name, ...values(item, "aliases"), item.guide_notes].join(" ").toLocaleLowerCase();
   const selectedSkills = filters.skills || [];
+  const ownedMode = filters.ownedMode || (filters.owned ? "owned" : "all");
+  const ownedMatches = ownedMode === "owned"
+    ? state.owned.has(item.id)
+    : ownedMode === "unowned"
+      ? !state.owned.has(item.id)
+      : true;
   return (!filters.search || searchable.includes(filters.search.toLocaleLowerCase()))
     && (!filters.faction || factions(item).includes(filters.faction))
     && (!filters.class || item.class_name === filters.class)
     && (!filters.quality || item.quality === filters.quality)
     && (!filters.element || item.skills.some((skill) => skill.description.includes(filters.element) || values(skill, "tags").includes(filters.element)))
     && selectedSkills.every((skill) => tags(item).includes(skill))
-    && (!filters.owned || state.owned.has(item.id));
+    && ownedMatches;
 }
 
 function listItem(item, selected, checkable = true) {
@@ -657,7 +665,23 @@ function toolbarAction(action) {
     return;
   }
   if (action === "owned-manager") ownedManager();
-  if (action === "owned-filter") { state.ownedFilter = !state.ownedFilter; $("#owned-toggle").classList.toggle("is-on", state.ownedFilter); state.browserFilters.owned = state.ownedFilter; state.teamFilters.owned = state.ownedFilter; refresh("browser"); refresh("team"); }
+  if (action === "owned-filter") {
+    const button = $("#owned-toggle");
+    const modes = ["all", "owned", "unowned"];
+    const mode = modes[(modes.indexOf(state.ownedFilterMode) + 1) % modes.length];
+    const labels = { all: "顯示全部角色", owned: "只顯示已擁有角色", unowned: "只顯示未擁有角色" };
+    state.ownedFilterMode = mode;
+    state.ownedFilter = mode === "owned";
+    button.textContent = labels[mode];
+    button.classList.toggle("is-on", mode !== "all");
+    state.browserFilters.owned = state.ownedFilter;
+    state.teamFilters.owned = state.ownedFilter;
+    state.browserFilters.ownedMode = mode;
+    state.teamFilters.ownedMode = mode;
+    $all("[data-filter='owned']").forEach((input) => { input.checked = mode === "owned"; });
+    refresh("browser");
+    refresh("team");
+  }
   if (action === "images") { state.imagesVisible = !state.imagesVisible; $("#images-toggle").classList.toggle("is-on", state.imagesVisible); renderAll(); }
   if (action === "save-owned") download("owned_characters.json", { version: 1, owned_character_ids: [...state.owned] });
   if (action === "load-owned") loadFile($("#owned-file-input"), (data) => {

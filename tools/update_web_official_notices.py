@@ -46,6 +46,20 @@ CLASS_PREFIXES = {
     "射手": "ranger",
     "法師": "mage",
 }
+OFFICIAL_TRANSLATION_NAMES = {
+    "戀歌謬斯•艾拉托": "戀歌謬斯•艾拉託",
+    "小惡魔女僕•瑪莉•蘿絲": "小惡魔女僕•瑪莉•蘿絲",
+    "英靈統領•海德倫": "英魂統領•海德輪",
+    "大力神•赫拉克勒斯": "大力神•海克力斯",
+    "黑貓女神•克里奧佩特拉": "埃及豔後•克里奧佩特拉",
+    "凱旋皇女•凱撒": "凱旋皇女•凱撤",
+    "霜星獵手•俄里翁": "雙星獵手•俄裏翁",
+    "聖劍主教•奧菲莉亞": "聖劍主教•奧菲利亞",
+    "噬血魔劍•提爾鋒": "嗜血魔劍•提爾鋒",
+    "大天使．加百列": "大天使•加百列",
+    "愛神．維納斯": "愛神•維納斯",
+    "墮落女武神．赫爾薇爾": "墮落女武神•赫爾維爾",
+}
 
 
 def atomic_write_json(path: Path, payload: object) -> None:
@@ -77,7 +91,11 @@ def load_existing_notices() -> dict:
 
 
 def normalized_name(name: str) -> str:
-    return re.sub(r"\s+", " ", name.replace("‧", " • ").replace("・", " • ")).strip()
+    return re.sub(r"\s+", " ", name.replace("‧", " • ").replace("・", " • ").replace("．", " • ")).strip()
+
+
+def comparison_name(name: str) -> str:
+    return re.sub(r"\s*•\s*", "•", normalized_name(name))
 
 
 def existing_character_names(character: dict) -> set[str]:
@@ -85,6 +103,73 @@ def existing_character_names(character: dict) -> set[str]:
     aliases = {normalized_name(alias) for alias in character.get("aliases", [])}
     aliases.discard("")
     return {name, *aliases} - {""}
+
+
+def merge_translation_duplicates(records: list[dict]) -> bool:
+    changed = False
+    for official_name, existing_name in OFFICIAL_TRANSLATION_NAMES.items():
+        official_key = comparison_name(official_name)
+        existing_key = comparison_name(existing_name)
+        canonical = next(
+            (
+                record for record in records
+                if comparison_name(record.get("name", "")) == existing_key
+            ),
+            None,
+        )
+        duplicate = next(
+            (
+                record for record in records
+                if comparison_name(record.get("name", "")) == official_key
+                and record is not canonical
+            ),
+            None,
+        )
+        if not canonical or not duplicate:
+            continue
+        aliases = list(canonical.get("aliases", []))
+        for value in [duplicate.get("name", ""), *duplicate.get("aliases", [])]:
+            if value and value != canonical.get("name") and value not in aliases:
+                aliases.append(value)
+        if canonical.get("name") != official_name:
+            aliases.append(canonical["name"])
+            canonical["name"] = official_name
+        canonical["aliases"] = aliases
+        records.remove(duplicate)
+        changed = True
+    return changed
+
+
+def apply_official_translation_name(name: str, records: list[dict]) -> bool:
+    target_name = next(
+        (
+            target
+            for official, target in OFFICIAL_TRANSLATION_NAMES.items()
+            if comparison_name(official) == comparison_name(name)
+        ),
+        None,
+    )
+    if not target_name:
+        return False
+    canonical = next(
+        (
+            record for record in records
+            if comparison_name(record.get("name", "")) in {
+                comparison_name(name),
+                comparison_name(target_name),
+            }
+        ),
+        None,
+    )
+    if not canonical:
+        return False
+    if canonical.get("name") != name:
+        aliases = list(canonical.get("aliases", []))
+        if canonical.get("name") and canonical["name"] not in aliases:
+            aliases.append(canonical["name"])
+        canonical["name"] = name
+        canonical["aliases"] = aliases
+    return True
 
 
 def character_id(name: str, class_name: str, records: list[dict]) -> str:
@@ -110,6 +195,8 @@ def new_character_from_notice(
     created = []
     for raw_name in names:
         name = normalized_name(raw_name)
+        if apply_official_translation_name(name, records + created):
+            continue
         if any(name in existing_character_names(record) for record in records + created):
             continue
         marker = next(
@@ -191,6 +278,7 @@ def main() -> None:
     characters = json.loads(WEB_CHARACTER_DATA.read_text(encoding="utf-8-sig"))
     if not isinstance(characters, list):
         raise ValueError("角色資料必須是 JSON 陣列。")
+    characters_changed = merge_translation_duplicates(characters)
 
     existing = load_existing_notices()
     with tempfile.TemporaryDirectory() as temporary_directory:
@@ -225,7 +313,7 @@ def main() -> None:
             continue
         content = _fetch(notice["url"])
         created.extend(new_character_from_notice(content, notice["url"], characters + created))
-    if created:
+    if created or characters_changed:
         characters.extend(created)
         atomic_write_json(WEB_CHARACTER_DATA, characters)
         version = json.loads(WEB_VERSION_DATA.read_text(encoding="utf-8"))
@@ -235,7 +323,6 @@ def main() -> None:
             "character_count": len(characters),
         })
         atomic_write_json(WEB_VERSION_DATA, version)
-
     notices = report.get("notices", [])
     payload = {
         "source": "https://sod.game-beans.com/jx/sodNotice/index.html",
