@@ -28,6 +28,7 @@ from dragon_team_builder.official_updates import (
     apply_official_updates,
     check_official_updates,
 )
+from dragon_team_builder.abilities import classify_abilities
 
 
 WEB_CHARACTER_DATA = ROOT / "web" / "data" / "characters.json"
@@ -305,21 +306,25 @@ def new_character_from_notice(
         image_url = first_image_after_quality(content, raw_name, url)
         skill_records = []
         discovered_terms = []
+        classified_functions = []
         for skill_type, skill_name, description in _skill_blocks(text):
             cleaned_description, definitions = clean_skill_description(description)
             discovered_terms.extend(definitions)
+            skill_tags = list(dict.fromkeys([
+                *classify_abilities([skill_name], cleaned_description),
+                *definitions,
+            ]))
+            classified_functions.extend(skill_tags)
             skill_records.append({
                 "name": skill_name,
                 "description": cleaned_description,
                 "skill_type": skill_type,
-                "tags": [],
+                "tags": skill_tags,
                 "metrics": [],
                 "sources": [source],
             })
         skill_records = sort_skill_records(skill_records)
-        special = list(dict.fromkeys([*special, *discovered_terms]))
-        for skill in skill_records:
-            skill["tags"] = list(special)
+        special = list(dict.fromkeys([*classified_functions, *discovered_terms]))
         aliases = [
             part.strip()
             for part in re.split(r"\s*•\s*", name)
