@@ -181,7 +181,7 @@ function createCombo({ items, firstLabel, searchable = false, placeholder = "", 
       list.hidden ? open() : close();
       return;
     }
-    open(input.value);
+    open(searchable && !input.readOnly ? input.value : "");
   });
   input.addEventListener("input", () => open(input.value));
   if (searchable && isMobile) {
