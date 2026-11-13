@@ -7,6 +7,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .abilities import classify_abilities
+from .mechanics import MECHANICS
 from .models import Character, Skill, SourceReference
 from .quality import normalize_quality
 from .text_normalizer import to_traditional
@@ -80,11 +81,7 @@ def load_characters(path: str | Path) -> list[Character]:
                     ),
                     "skill_type": to_traditional(skill.get("skill_type", "")),
                     "tags": classify_abilities(
-                        [
-                            to_traditional(tag)
-                            for tag in _as_list(skill.get("tags"))
-                            if isinstance(tag, str)
-                        ] + [to_traditional(skill.get("name", ""))],
+                        [to_traditional(skill.get("name", ""))],
                         to_traditional(skill.get("description", "")),
                     ),
                     "metrics": [
@@ -104,22 +101,16 @@ def load_characters(path: str | Path) -> list[Character]:
         ]
         record["skills"] = loaded_skills
         classified_functions: list[str] = []
+        all_descriptions = " ".join(
+            skill.description for skill in loaded_skills
+        )
         for value in original_functions:
-            description = " ".join(
-                skill.description
-                for skill in loaded_skills
-                if (
-                    value in skill.name
-                    or value in skill.description
-                    or (
-                        value == "時間暫停"
-                        and "時間停滯" in skill.description
-                    )
-                )
-            )
-            classified_functions.extend(
-                classify_abilities([value], description)
-            )
+            if (
+                value in MECHANICS
+                and value in all_descriptions
+                and value not in classified_functions
+            ):
+                classified_functions.append(value)
         for tag in (tag for skill in loaded_skills for tag in skill.tags):
             if tag not in classified_functions:
                 classified_functions.append(tag)
