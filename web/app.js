@@ -81,7 +81,10 @@ function values(character, key) { return Array.isArray(character[key]) ? charact
 function tags(character) { return [...values(character, "special_functions"), ...character.skills.flatMap((skill) => values(skill, "tags"))]; }
 function factions(character) { return [...new Set([character.main_faction, character.secondary_faction].filter(Boolean))]; }
 function character(id) { return state.characters.find((item) => item.id === id) || null; }
-function imagePath(item) { return item?.image_file ? `./data/${item.image_file.replace(/^data[\\/]/, "")}` : ""; }
+function imagePath(item) {
+  if (item?.image_file) return `./data/${item.image_file.replace(/^data[\\/]/, "")}`;
+  return item?.image_url || "";
+}
 function factionPath(name) { return FACTIONS[name] ? `./data/factions/${FACTIONS[name][0]}` : ""; }
 function factionDisplay(name) { return FACTIONS[name]?.[2] || name; }
 function positionRow(index) { return index < 3 ? "前排" : index < 6 ? "中排" : "後排"; }
