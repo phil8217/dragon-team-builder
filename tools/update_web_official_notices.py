@@ -9,6 +9,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
 
 
@@ -184,6 +185,35 @@ def character_id(name: str, class_name: str, records: list[dict]) -> str:
     return candidate
 
 
+def extract_quality(lines: list[str], marker: int) -> str:
+    for index in range(marker + 1, min(marker + 30, len(lines))):
+        line = lines[index]
+        if not line.startswith("品質："):
+            continue
+        value = line.split("：", 1)[1].strip()
+        if value:
+            return value
+        for following in lines[index + 1:]:
+            if following.strip():
+                return following.strip()
+    return "未知"
+
+
+def first_image_after_quality(content: str, raw_name: str, notice_url: str) -> str:
+    name_position = content.find(raw_name)
+    if name_position < 0:
+        return ""
+    quality_position = content.find("品質", name_position)
+    if quality_position < 0:
+        return ""
+    image_match = re.search(
+        r"<img[^>]+src=[\"']([^\"']+)",
+        content[quality_position:],
+        flags=re.S,
+    )
+    return urljoin(notice_url, image_match.group(1)) if image_match else ""
+
+
 def new_character_from_notice(
     content: str,
     url: str,
@@ -206,10 +236,7 @@ def new_character_from_notice(
         if marker is None:
             continue
         block = lines[marker:marker + 14]
-        quality = next(
-            (line.split("：", 1)[1].strip() for line in block if line.startswith("品質：")),
-            "未知",
-        )
+        quality = extract_quality(lines, marker)
         class_name = next(
             (value for value in CLASS_NAMES if any(line == f"職業：{value}" for line in block)),
             "未分類",
@@ -232,11 +259,7 @@ def new_character_from_notice(
             "accessed_at": datetime.now(ZoneInfo("Asia/Taipei")).date().isoformat(),
             "confidence": "medium",
         }
-        image_match = re.search(
-            rf"{re.escape(raw_name)}.*?<img[^>]+src=[\"']([^\"']+)",
-            content,
-            flags=re.S,
-        )
+        image_url = first_image_after_quality(content, raw_name, url)
         skills = [
             {
                 "name": skill_name,
@@ -263,7 +286,7 @@ def new_character_from_notice(
                 "skills": skills,
                 "special_functions": list(special),
                 "aliases": aliases,
-                "image_url": image_match.group(1) if image_match else "",
+                "image_url": image_url,
                 "quality": quality,
                 "tier": "",
                 "guide_notes": f"台服 {source['accessed_at']} 官方公告新增角色。",
