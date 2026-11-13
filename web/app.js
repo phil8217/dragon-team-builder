@@ -29,6 +29,7 @@ const state = {
   characters: [],
   version: {},
   officialNoticeData: {},
+  mechanics: {},
   owned: new Set(readJson(STORAGE.owned, [])),
   ownedProfiles: readJson(STORAGE.ownedProfiles, null),
   activeOwnedProfile: localStorage.getItem(STORAGE.activeOwnedProfile) || "預設",
@@ -249,6 +250,9 @@ async function loadData() {
     const versionResponse = await fetch(`./data/data_version.json?v=${cacheBust}`);
     const version = versionResponse.ok ? await versionResponse.json() : {};
     state.version = version;
+    const mechanicsResponse = await fetch(`./data/mechanics.json?v=${cacheBust}`);
+    if (!mechanicsResponse.ok) throw new Error(`戰鬥機制資料載入失敗（HTTP ${mechanicsResponse.status}）`);
+    state.mechanics = await mechanicsResponse.json();
     const noticeResponse = await fetch(`./data/official_maintenance_notices.json?v=${cacheBust}`);
     state.officialNoticeData = noticeResponse.ok ? await noticeResponse.json() : {};
     $("#data-version").textContent = `資料版本：${version.version || version.updated_at || "未知"}`;
@@ -402,6 +406,32 @@ function renderDetails(target) {
   if (!item) { root.innerHTML = "<p class='hint'>請選擇角色查看詳細資料。</p>"; return; }
   root.innerHTML = characterDetailsMarkup(item);
 }
+function formatSkillDescription(item, skill) {
+  const references = [];
+  item.skills.forEach((value) => {
+    if (value.name && !references.some((reference) => reference.name === value.name)) {
+      references.push({ name: value.name, type: "skill", color: SKILL_COLORS[value.skill_type] || "#555" });
+    }
+  });
+  Object.keys(state.mechanics).forEach((name) => {
+    if (!references.some((reference) => reference.name === name)) references.push({ name, type: "mechanic" });
+  });
+  if (!references.length) return esc(skill.description);
+  const pattern = new RegExp(references.sort((a, b) => b.name.length - a.name.length).map((reference) => reference.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "g");
+  let result = "";
+  let cursor = 0;
+  for (const match of skill.description.matchAll(pattern)) {
+    result += esc(skill.description.slice(cursor, match.index));
+    const reference = references.find((value) => value.name === match[0]);
+    if (reference.type === "skill") {
+      result += `<span class="skill-reference" style="color:${reference.color}">${esc(match[0])}</span>`;
+    } else {
+      result += `<button type="button" class="mechanic-link" data-mechanic="${esc(match[0])}">${esc(match[0])}</button>`;
+    }
+    cursor = match.index + match[0].length;
+  }
+  return result + esc(skill.description.slice(cursor));
+}
 function characterDetailsMarkup(item) {
   const prof = PROFESSION[item.class_name] || ["?", "#777"];
   const badges = factions(item).map((name) => `<span class="faction-badge" style="background:${FACTIONS[name]?.[1] || "#ddd"}">${factionPath(name) ? `<img src="${factionPath(name)}" alt="">` : ""}${esc(factionDisplay(name))}</span>`).join("");
@@ -410,7 +440,7 @@ function characterDetailsMarkup(item) {
     <div class="faction-badges">${badges}</div><p class="muted">品質：${esc(item.quality || "未確認")}　TIER：${esc(item.tier || "未評級")}</p></div></div>
     <div class="detail-section"><h3>特殊功能</h3><p>${values(item, "special_functions").map((value) => esc(value)).join("、") || "尚未整理"}</p></div>
     ${item.guide_notes ? `<div class="detail-section"><h3>攻略備註</h3><p>${esc(item.guide_notes)}</p></div>` : ""}
-    <div class="detail-section"><h3>技能</h3>${item.skills.filter((skill) => !["神格", "God Skill"].includes(skill.skill_type)).map((skill) => `<h4 class="skill-title">${esc(skill.name)} <span class="skill-tag" style="color:${SKILL_COLORS[skill.skill_type] || "#555"}">${esc(skill.skill_type || "技能")}：</span>${values(skill, "tags").map((tag) => `<span class="skill-tag">${esc(tag)}</span>`).join("、")}</h4><p class="skill-text">${esc(skill.description)}</p>`).join("")}</div>`;
+    <div class="detail-section"><h3>技能</h3>${item.skills.filter((skill) => !["神格", "God Skill"].includes(skill.skill_type)).map((skill) => `<h4 class="skill-title">${esc(skill.name)} <span class="skill-tag" style="color:${SKILL_COLORS[skill.skill_type] || "#555"}">${esc(skill.skill_type || "技能")}：</span>${values(skill, "tags").map((tag) => `<span class="skill-tag">${esc(tag)}</span>`).join("、")}</h4><p class="skill-text">${formatSkillDescription(item, skill)}</p>`).join("")}</div>`;
 }
 function showCharacterModal(item) {
   showModal(item.name, characterDetailsMarkup(item));
@@ -723,6 +753,13 @@ function renderAll() {
   refresh("browser"); refresh("team"); renderTeam(); renderEnemyBoard(); renderSources(state.version, state.officialNoticeData);
 }
 
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-mechanic]");
+  if (!button) return;
+  const name = button.dataset.mechanic;
+  const description = state.mechanics[name];
+  if (description) showModal(`${name}說明`, `<p>${esc(description)}</p>`);
+});
 $all(".tab").forEach((tab) => tab.addEventListener("click", () => { $all(".tab, .tab-panel").forEach((element) => element.classList.remove("is-active")); tab.classList.add("is-active"); $(`#${tab.dataset.tab}-tab`).classList.add("is-active"); }));
 $all("[data-action]").forEach((button) => button.addEventListener("click", () => {
   const action = button.dataset.action;

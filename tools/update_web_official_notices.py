@@ -235,6 +235,27 @@ def first_image_after_quality(content: str, raw_name: str, notice_url: str) -> s
     return urljoin(notice_url, image_match.group(1)) if image_match else ""
 
 
+def clean_skill_description(description: str) -> tuple[str, list[str]]:
+    lines = [line.strip() for line in description.splitlines() if line.strip()]
+    cleaned = []
+    definitions = []
+    index = 0
+    while index < len(lines):
+        definition = re.fullmatch(r"\[([^\]]+)\]", lines[index])
+        if definition and index + 1 < len(lines) and lines[index + 1].startswith(":"):
+            definitions.append(definition.group(1))
+            index += 2
+            continue
+        inline_definition = re.fullmatch(r"\[([^\]]+)\]\s*:\s*.+", lines[index])
+        if inline_definition:
+            definitions.append(inline_definition.group(1))
+            index += 1
+            continue
+        cleaned.append(lines[index])
+        index += 1
+    return " ".join(cleaned), definitions
+
+
 def new_character_from_notice(
     content: str,
     url: str,
@@ -281,17 +302,22 @@ def new_character_from_notice(
             "confidence": "medium",
         }
         image_url = first_image_after_quality(content, raw_name, url)
-        skills = [
-            {
+        skill_records = []
+        discovered_terms = []
+        for skill_type, skill_name, description in _skill_blocks(text):
+            cleaned_description, definitions = clean_skill_description(description)
+            discovered_terms.extend(definitions)
+            skill_records.append({
                 "name": skill_name,
-                "description": description,
+                "description": cleaned_description,
                 "skill_type": skill_type,
-                "tags": list(special),
+                "tags": [],
                 "metrics": [],
                 "sources": [source],
-            }
-            for skill_type, skill_name, description in _skill_blocks(text)
-        ]
+            })
+        special = list(dict.fromkeys([*special, *discovered_terms]))
+        for skill in skill_records:
+            skill["tags"] = list(special)
         aliases = [
             part.strip()
             for part in re.split(r"\s*•\s*", name)
@@ -303,7 +329,7 @@ def new_character_from_notice(
                 "class_name": class_name,
                 "main_faction": factions[0] if factions else "未分類",
                 "secondary_faction": factions[1] if len(factions) > 1 else "",
-                "skills": skills,
+                "skills": skill_records,
                 "special_functions": list(special),
                 "aliases": aliases,
                 "image_url": image_url,

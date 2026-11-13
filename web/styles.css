@@ -95,6 +95,8 @@ h3 { margin: 0 0 8px; font-size: 15px; }
 .skill-title { margin: 10px 0 2px; font-size: 14px; }
 .skill-text { margin: 0; color: #202020; white-space: pre-wrap; }
 .skill-tag { color: var(--muted); font-size: 12px; font-weight: normal; }
+.mechanic-link { padding: 0; border: 0; border-radius: 0; background: transparent; color: #245d8c; text-decoration: underline; cursor: pointer; }
+.mechanic-link:hover { background: #e9f1f8; }
 .candidate-panel { display: flex; min-height: 0; flex-direction: column; padding: 8px; }
 .candidate-panel .filter-panel { flex: 0 0 auto; border: 0; padding: 0; }
 .candidate-panel .character-list { flex: 1 1 auto; min-height: 0; overflow: auto; }
