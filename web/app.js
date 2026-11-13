@@ -24,8 +24,10 @@ const PROFESSION = {
 };
 const PROFESSION_ORDER = ["守衛", "牧師", "刺客", "戰士", "射手", "法師"];
 const SKILL_COLORS = { "天賦": "#c0392b", "奧義": "#8e44ad", "絕技": "#d35400", "秘技": "#2471a3", "特技": "#16805c" };
+const GOOGLE_FORM_URL = "https://forms.gle/2ZaLSUfowj9iR5g59";
 const state = {
   characters: [],
+  version: {},
   owned: new Set(readJson(STORAGE.owned, [])),
   ownedProfiles: readJson(STORAGE.ownedProfiles, null),
   activeOwnedProfile: localStorage.getItem(STORAGE.activeOwnedProfile) || "預設",
@@ -134,15 +136,28 @@ function createCombo({ items, firstLabel, searchable = false, placeholder = "", 
   root.innerHTML = `<input class="combo-input" type="text" ${searchable ? "" : "readonly"} placeholder="${esc(placeholder)}" autocomplete="off"><span class="combo-arrow">▾</span><div class="combo-list" hidden></div>`;
   const input = root.querySelector("input");
   const list = root.querySelector(".combo-list");
+  const arrow = root.querySelector(".combo-arrow");
+  const isMobile = window.matchMedia("(max-width: 700px)").matches;
+  if (searchable && isMobile) input.readOnly = true;
   const all = [{ value: "", label: firstLabel }, ...items];
   let current = "";
+  let longPressTimer = null;
+  let longPressReady = false;
+  let mobileSearchMode = false;
   const labelOf = (value) => (all.find((item) => item.value === value) || all[0]).label;
   const renderList = (query = "") => {
     const keyword = query.trim().toLocaleLowerCase();
     const shown = all.filter((item) => !keyword || item.label.toLocaleLowerCase().includes(keyword));
     list.innerHTML = shown.map((item) => `<div class="combo-option ${item.value === current ? "active" : ""}" data-value="${esc(item.value)}">${item.icon ? `<img src="${item.icon}" alt="">` : ""}<span>${esc(item.label)}</span></div>`).join("") || '<div class="combo-empty">沒有符合的選項</div>';
   };
-  const close = () => { list.hidden = true; input.value = labelOf(current); };
+  const close = () => {
+    list.hidden = true;
+    if (searchable && isMobile) {
+      mobileSearchMode = false;
+      input.readOnly = true;
+    }
+    input.value = labelOf(current);
+  };
   const open = (query = "") => { renderList(query); list.hidden = false; };
   const setValue = (value, notify = true) => {
     current = value;
@@ -151,9 +166,43 @@ function createCombo({ items, firstLabel, searchable = false, placeholder = "", 
     if (notify && onChange) onChange(value);
   };
   input.value = firstLabel;
-  input.addEventListener("focus", () => { if (searchable) input.select(); open(); });
-  input.addEventListener("click", () => open());
+  input.addEventListener("focus", () => {
+    if (searchable && (!isMobile || mobileSearchMode)) input.select();
+    if (!isMobile || !searchable || mobileSearchMode) open();
+  });
+  input.addEventListener("click", () => {
+    if (isMobile && searchable && input.readOnly) {
+      list.hidden ? open() : close();
+      return;
+    }
+    open(input.value);
+  });
   input.addEventListener("input", () => open(input.value));
+  if (searchable && isMobile) {
+    input.addEventListener("pointerdown", () => {
+      clearTimeout(longPressTimer);
+      longPressReady = false;
+      longPressTimer = setTimeout(() => {
+        longPressReady = true;
+      }, 550);
+    });
+    input.addEventListener("pointerup", () => {
+      clearTimeout(longPressTimer);
+      if (!longPressReady) return;
+      longPressReady = false;
+      mobileSearchMode = true;
+      input.readOnly = false;
+      input.focus({ preventScroll: true });
+      input.select();
+      open(input.value);
+    });
+    const cancelLongPress = () => {
+      clearTimeout(longPressTimer);
+      longPressReady = false;
+    };
+    input.addEventListener("pointercancel", cancelLongPress);
+    input.addEventListener("pointerleave", cancelLongPress);
+  }
   input.addEventListener("keydown", (event) => {
     if (event.key === "Escape") close();
     if (event.key === "Enter") {
@@ -162,7 +211,16 @@ function createCombo({ items, firstLabel, searchable = false, placeholder = "", 
       if (first) setValue(first.dataset.value);
     }
   });
-  root.querySelector(".combo-arrow").addEventListener("click", () => { list.hidden ? (input.focus(), open()) : close(); });
+  arrow.addEventListener("pointerdown", (event) => event.preventDefault());
+  arrow.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (list.hidden) {
+      open();
+    } else {
+      close();
+    }
+  });
   list.addEventListener("mousedown", (event) => {
     const option = event.target.closest(".combo-option");
     if (!option) return;
@@ -179,11 +237,12 @@ function createCombo({ items, firstLabel, searchable = false, placeholder = "", 
 
 async function loadData() {
   try {
-    const response = await fetch("./data/characters.json?v=2026.11.12");
+    const response = await fetch("./data/characters.json?v=2026.11.16");
     if (!response.ok) throw new Error(`角色資料載入失敗（HTTP ${response.status}）`);
     state.characters = await response.json();
     const versionResponse = await fetch("./data/data_version.json");
     const version = versionResponse.ok ? await versionResponse.json() : {};
+    state.version = version;
     $("#data-version").textContent = `資料版本：${version.version || version.updated_at || "未知"}`;
     if (!state.teams[state.activeTeam]) state.activeTeam = Object.keys(state.teams)[0] || "隊伍 1";
     renderAll();
@@ -200,7 +259,7 @@ function createFilterPanel(target, includeOwned = false) {
     <div class="filter-row"><label>陣營</label><div data-faction-combo></div></div>
     <div class="filter-row"><label>職業</label><select data-filter="class"><option value="">全部職業</option></select></div>
     <div class="filter-row"><label>品質</label><select data-filter="quality"><option value="">全部品質</option></select></div>
-    <div class="filter-row"><label>技能、能力</label><div data-skill-rows></div><button class="add-filter" type="button" data-add-skill>＋新增技能篩選</button></div>
+    <div class="filter-row"><label>技能、能力 <span class="mobile-skill-search-hint">（長按搜尋）</span></label><div data-skill-rows></div><button class="add-filter" type="button" data-add-skill>＋新增技能篩選</button></div>
     <div class="filter-row"><label>元素機制</label><select data-filter="element"><option value="">全部元素機制</option></select></div>
     ${includeOwned ? '<div class="check-row"><input data-filter="owned" type="checkbox"><label>只顯示已擁有角色</label></div>' : ""}`;
   const filters = target === "browser" ? state.browserFilters : state.teamFilters;
@@ -283,9 +342,31 @@ function renderList(target) {
   const list = target === "browser" ? $("#browser-list") : $("#team-list");
   const filters = target === "browser" ? state.browserFilters : state.teamFilters;
   const items = state.characters.filter((item) => filterMatches(item, filters))  .sort(compareCharacters);
-  if (target === "browser") $("#browser-count").textContent = `符合條件：${items.length} / ${state.characters.length} 名角色`;
+  if (target === "browser") $("#browser-count").textContent = `${items.length}/${state.characters.length} 名角色`;
   list.innerHTML = items.map((item) => listItem(item, item.id === (target === "browser" ? state.selectedBrowser : state.selectedTeamCandidate), true)).join("") || '<p class="hint">目前沒有符合條件的角色。</p>';
   $all("[data-character]", list).forEach((row) => {
+    let longPressTimer = null;
+    const startLongPress = (event) => {
+      if (event.target.matches("[data-owned]")) return;
+      if (!window.matchMedia("(max-width: 700px)").matches) return;
+      longPressTimer = window.setTimeout(() => {
+        longPressTimer = null;
+        row.classList.add("long-pressed");
+        const item = character(row.dataset.character);
+        if (item) showCharacterModal(item);
+      }, 550);
+    };
+    const cancelLongPress = () => {
+      if (longPressTimer !== null) window.clearTimeout(longPressTimer);
+      longPressTimer = null;
+    };
+    row.addEventListener("pointerdown", startLongPress);
+    row.addEventListener("pointerup", cancelLongPress);
+    row.addEventListener("pointercancel", cancelLongPress);
+    row.addEventListener("pointerleave", cancelLongPress);
+    row.addEventListener("contextmenu", (event) => {
+      if (window.matchMedia("(max-width: 700px)").matches) event.preventDefault();
+    });
     row.addEventListener("click", (event) => {
       if (event.target.matches("[data-owned]")) return;
       if (target === "browser") { state.selectedBrowser = row.dataset.character; renderList("browser"); renderDetails("browser"); }
@@ -304,14 +385,20 @@ function renderDetails(target) {
   const root = target === "browser" ? $("#browser-details") : $("#team-details");
   const item = character(id);
   if (!item) { root.innerHTML = "<p class='hint'>請選擇角色查看詳細資料。</p>"; return; }
+  root.innerHTML = characterDetailsMarkup(item);
+}
+function characterDetailsMarkup(item) {
   const prof = PROFESSION[item.class_name] || ["?", "#777"];
   const badges = factions(item).map((name) => `<span class="faction-badge" style="background:${FACTIONS[name]?.[1] || "#ddd"}">${factionPath(name) ? `<img src="${factionPath(name)}" alt="">` : ""}${esc(factionDisplay(name))}</span>`).join("");
-  root.innerHTML = `<div class="details-header">${state.imagesVisible && imagePath(item) ? `<img src="${imagePath(item)}" alt="${esc(item.name)}">` : ""}
+  return `<div class="details-header">${state.imagesVisible && imagePath(item) ? `<img src="${imagePath(item)}" alt="${esc(item.name)}">` : ""}
     <div><h2>${esc(item.name)}</h2><div class="profession-line"><span class="profession-icon" style="background:${prof[1]}">${prof[0]}</span>職業：${esc(item.class_name)}</div>
     <div class="faction-badges">${badges}</div><p class="muted">品質：${esc(item.quality || "未確認")}　TIER：${esc(item.tier || "未評級")}</p></div></div>
     <div class="detail-section"><h3>特殊功能</h3><p>${values(item, "special_functions").map((value) => esc(value)).join("、") || "尚未整理"}</p></div>
     ${item.guide_notes ? `<div class="detail-section"><h3>攻略備註</h3><p>${esc(item.guide_notes)}</p></div>` : ""}
     <div class="detail-section"><h3>技能</h3>${item.skills.filter((skill) => !["神格", "God Skill"].includes(skill.skill_type)).map((skill) => `<h4 class="skill-title">${esc(skill.name)} <span class="skill-tag" style="color:${SKILL_COLORS[skill.skill_type] || "#555"}">${esc(skill.skill_type || "技能")}：</span>${values(skill, "tags").map((tag) => `<span class="skill-tag">${esc(tag)}</span>`).join("、")}</h4><p class="skill-text">${esc(skill.description)}</p>`).join("")}</div>`;
+}
+function showCharacterModal(item) {
+  showModal(item.name, characterDetailsMarkup(item));
 }
 
 function refresh(target) { renderList(target); if (target === "browser") renderDetails("browser"); if (target === "team") renderDetails("team"); }
@@ -396,7 +483,9 @@ function renderEnemyBoard() {
   renderEnemyAnalysis();
 }
 function boardSlot(item, index, own) {
-  return `<button class="board-slot ${positionClass(index)}" ${own ? `data-own-position="${index}"` : `data-enemy-position="${index}"`}>${item ? (state.imagesVisible && imagePath(item) ? `<img src="${imagePath(item)}" alt="">` : "") + `<span class="slot-name">${esc(positionRow(index))}<br>${esc(item.name)}</span><span class="slot-class">${esc(item.class_name)}</span>` : `<span class="slot-name">${positionRow(index)}<br>空位</span>`}</button>`;
+  const mobileRow = own ? Math.floor(index / 3) + 1 : 3 - Math.floor(index / 3);
+  const mobileColumn = index % 3 + 1;
+  return `<button class="board-slot ${positionClass(index)}" style="--mobile-row:${mobileRow};--mobile-column:${mobileColumn}" data-slot-number="${index + 1}" ${own ? `data-own-position="${index}"` : `data-enemy-position="${index}"`}>${item ? (state.imagesVisible && imagePath(item) ? `<img src="${imagePath(item)}" alt="">` : "") + `<span class="slot-name">${esc(positionRow(index))}<br>${esc(item.name)}</span><span class="slot-class">${esc(item.class_name)}</span>` : `<span class="slot-name">${positionRow(index)}<br>空位</span>`}</button>`;
 }
 function renderEnemyAnalysis() {
   const members = state.enemy.map(character).filter(Boolean);
@@ -410,7 +499,7 @@ function renderEnemyAnalysis() {
   if (benefits.length) requirements.push("驅散增益", "偷取增益");
   if (debuffs.length) requirements.push("淨化", "驅散");
   if (healing.length) requirements.push("治療增強", "淨化");
-  $("#enemy-analysis").innerHTML = `<h3>敵方已知威脅</h3><p><b>控制：</b>${esc(controls.join("、") || "無")}<br><b>增益：</b>${esc(benefits.join("、") || "無")}<br><b>減益：</b>${esc(debuffs.join("、") || "無")}<br><b>治療相關：</b>${esc(healing.join("、") || "無")}</p><p><b>建議反制需求：</b>${esc([...new Set(requirements)].join("、") || "暫無")}</p><p class="muted">九宮格會以相同排與列對齊，方便觀察我方後排、中排、前排與敵方前排、中排、後排的相對位置。目前只使用角色資料中已有的技能與能力資訊。</p>`;
+  $("#enemy-analysis").innerHTML = `<h3>敵方已知威脅</h3><p><b>控制：</b>${esc(controls.join("、") || "無")}<br><b>增益：</b>${esc(benefits.join("、") || "無")}<br><b>減益：</b>${esc(debuffs.join("、") || "無")}<br><b>治療相關：</b>${esc(healing.join("、") || "無")}</p><p><b>建議反制需求：</b>${esc([...new Set(requirements)].join("、") || "暫無")}</p>`;
 }
 
 function renderSources(version = {}) {
@@ -521,8 +610,48 @@ function download(name, data) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = name; link.click(); URL.revokeObjectURL(link.href);
 }
-function loadFile(input, callback) { input.onchange = async () => { const file = input.files[0]; if (!file) return; try { callback(JSON.parse(await file.text())); } catch (error) { setStatus(`檔案讀取失敗：${error.message}`); } input.value = ""; }; input.click(); }
+function loadFile(input, callback) {
+  if (window.matchMedia("(max-width: 700px)").matches) {
+    showModal(
+      "選擇 JSON 檔案",
+      `<p class="hint">請選擇要載入的 JSON 檔案。</p><input class="mobile-file-picker" type="file" accept=".json,application/json">`,
+      (modal) => {
+        const picker = modal.querySelector(".mobile-file-picker");
+        picker.addEventListener("change", async () => {
+          const file = picker.files?.[0];
+          if (!file) return;
+          try {
+            callback(JSON.parse(await file.text()));
+            closeModal();
+          } catch (error) {
+            setStatus(`檔案讀取失敗：${error.message}`);
+          }
+        });
+      },
+    );
+    return;
+  }
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      callback(JSON.parse(await file.text()));
+    } catch (error) {
+      setStatus(`檔案讀取失敗：${error.message}`);
+    } finally {
+      input.value = "";
+    }
+  };
+  input.click();
+}
 function toolbarAction(action) {
+  if (action === "mobile-menu") {
+    const menu = document.querySelector(".toolbar-menu");
+    const toggle = document.querySelector(".mobile-menu-toggle");
+    const expanded = menu.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", String(expanded));
+    return;
+  }
   if (action === "owned-manager") ownedManager();
   if (action === "owned-filter") { state.ownedFilter = !state.ownedFilter; $("#owned-toggle").classList.toggle("is-on", state.ownedFilter); state.browserFilters.owned = state.ownedFilter; state.teamFilters.owned = state.ownedFilter; refresh("browser"); refresh("team"); }
   if (action === "images") { state.imagesVisible = !state.imagesVisible; $("#images-toggle").classList.toggle("is-on", state.imagesVisible); renderAll(); }
@@ -545,6 +674,7 @@ function toolbarAction(action) {
   if (action === "import-team") loadFile($("#team-file-input"), (data) => { if (data.teams) { state.teams = data.teams; state.activeTeam = data.active_team || Object.keys(state.teams)[0]; saveTeam(); renderAll(); } });
   if (action === "official-check") setStatus("網頁版的官方公告檢查由 GitHub Actions 執行；請重新整理頁面取得最新資料。");
   if (action === "official-report") showOfficialReport();
+  if (action === "report") window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer");
 }
 async function showOfficialReport() {
   try {
@@ -559,7 +689,7 @@ async function showOfficialReport() {
 function renderAll() {
   $("#browser-filters").replaceChildren(createFilterPanel("browser"));
   $("#team-filters").replaceChildren(createFilterPanel("team"));
-  refresh("browser"); refresh("team"); renderTeam(); renderEnemyBoard(); renderSources();
+  refresh("browser"); refresh("team"); renderTeam(); renderEnemyBoard(); renderSources(state.version);
 }
 
 $all(".tab").forEach((tab) => tab.addEventListener("click", () => { $all(".tab, .tab-panel").forEach((element) => element.classList.remove("is-active")); tab.classList.add("is-active"); $(`#${tab.dataset.tab}-tab`).classList.add("is-active"); }));

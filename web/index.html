@@ -13,20 +13,24 @@
     <span id="data-version" class="version-label">資料載入中</span>
   </header>
   <div class="toolbar" role="toolbar" aria-label="角色工具">
-    <button data-action="owned-manager">擁有角色管理</button>
-    <button id="owned-toggle" class="toggle-button" data-action="owned-filter">只顯示已擁有角色</button>
-    <button id="images-toggle" class="toggle-button is-on" data-action="images">顯示角色圖片</button>
-    <span class="toolbar-separator"></span>
-    <button data-action="save-owned">儲存擁有角色</button>
-    <button data-action="load-owned">載入擁有角色</button>
-    <button data-action="clear-owned">清除擁有角色</button>
-    <span class="toolbar-separator"></span>
-    <button data-action="export-team">匯出隊伍</button>
-    <button data-action="import-team">匯入隊伍</button>
-    <button data-action="official-check">檢查官方更新</button>
-    <button data-action="official-report">台服官方更新公告</button>
-    <input id="owned-file-input" type="file" accept="application/json" hidden>
-    <input id="team-file-input" type="file" accept="application/json" hidden>
+    <button class="mobile-menu-toggle" data-action="mobile-menu" aria-expanded="false">☰ 工具選單</button>
+    <div class="toolbar-menu">
+      <button data-action="owned-manager">擁有角色管理</button>
+      <button id="owned-toggle" class="toggle-button" data-action="owned-filter">只顯示已擁有角色</button>
+      <button id="images-toggle" class="toggle-button is-on" data-action="images">顯示角色圖片</button>
+      <span class="toolbar-separator"></span>
+      <button data-action="save-owned">儲存擁有角色</button>
+      <button data-action="load-owned">載入擁有角色</button>
+      <button data-action="clear-owned">清除擁有角色</button>
+      <span class="toolbar-separator"></span>
+      <button data-action="export-team">匯出隊伍</button>
+      <button data-action="import-team">匯入隊伍</button>
+      <button data-action="official-check">檢查官方更新</button>
+      <button data-action="official-report">台服官方更新公告</button>
+      <button data-action="report">問題回報</button>
+      <input id="owned-file-input" class="file-input" type="file" accept=".json,application/json">
+      <input id="team-file-input" class="file-input" type="file" accept=".json,application/json">
+    </div>
   </div>
 
   <main class="app-main">
@@ -41,7 +45,10 @@
       <div class="three-column browser-layout">
         <aside id="browser-filters" class="filter-panel"></aside>
         <section class="list-panel">
-          <div class="panel-title"><h2>角色清單</h2><span id="browser-count"></span></div>
+          <div class="panel-title">
+            <div class="panel-title-row"><h2>角色清單 <span class="mobile-long-press-hint">（長按詳細）</span></h2><span id="browser-count"></span></div>
+            <p class="panel-hint">勾選角色表示已擁有，可用篩選條件只顯示擁有角色</p>
+          </div>
           <div id="browser-list" class="character-list"></div>
         </section>
         <section id="browser-details" class="details-panel"></section>
@@ -96,6 +103,6 @@
   </main>
   <div id="modal-root"></div>
   <footer id="status-bar">已載入角色資料</footer>
-  <script src="./app.js?v=2026.11.12" defer></script>
+  <script src="./app.js?v=2026.11.17" defer></script>
 </body>
 </html>
