@@ -248,14 +248,18 @@ def _scope(text: str) -> str:
     return "單體"
 
 
-def _effect_clauses(text: str, keyword: str) -> list[str]:
-    """只取包含指定效果的語句，避免其他效果污染範圍判斷。"""
-
-    clauses = re.split(
+def _split_clauses(text: str) -> list[str]:
+    return re.split(
         r"[。；！？\n]+|，(?=並|且|同時|額外|對|使|令|為|回|提高|降低|獲得)"
         r"|並(?=使|為|回復|治療)",
         text,
     )
+
+
+def _effect_clauses(text: str, keyword: str) -> list[str]:
+    """只取包含指定效果的語句，避免其他效果污染範圍判斷。"""
+
+    clauses = _split_clauses(text)
     if keyword == "治療":
         matched = [
             clause
@@ -276,17 +280,20 @@ def _effect_scopes(text: str, keyword: str) -> list[str]:
         keyword = "時間停滯"
     elif keyword == "暈眩" and "眩暈" in text:
         keyword = "眩暈"
-    clauses = _effect_clauses(text, keyword)
-    if not clauses:
+    clauses = _split_clauses(text)
+    matched_indexes = [i for i, clause in enumerate(clauses) if keyword in clause]
+    if not matched_indexes:
         return ["單體"]
     scopes = []
-    for clause in clauses:
+    for index in matched_indexes:
+        clause = clauses[index]
         scope = _scope(clause)
-        if scope == "單體" and re.search(
-            r"全體|全隊|所有我方|所有敵方|我方全員|群|羣|範圍|附近|周圍|多名|多個|敵方單位|我方單位",
-            text,
-        ):
-            scope = _scope(text)
+        if scope == "單體":
+            for previous in reversed(clauses[:index]):
+                previous_scope = _scope(previous)
+                if previous_scope != "單體":
+                    scope = previous_scope
+                    break
         scopes.append(scope)
     return list(dict.fromkeys(scopes))
 
@@ -324,7 +331,9 @@ def classify_ability(value: str, description: str = "") -> list[str]:
         )
 
     if re.search(r"範圍內.*(?:傷害|攻擊)|每個敵方單位.*(?:傷害|攻擊)", text):
-        results.append(f"輸出-範圍-{_scope(text)}")
+        results.append("輸出-範圍-群體")
+    elif re.search(r"所有敵方.*(?:傷害|攻擊)", text):
+        results.append("輸出-範圍-全體")
     if "範圍輸出" in text or "多段打擊" in text:
         keyword = "範圍輸出" if "範圍輸出" in text else "多段打擊"
         results.extend(
