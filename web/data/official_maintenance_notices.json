@@ -1,7 +1,7 @@
 {
   "source": "https://sod.game-beans.com/jx/sodNotice/index.html",
-  "accessed_at": "2026-11-17",
-  "last_checked_at": "2026-11-17 16:53:26",
+  "accessed_at": "2026-11-18",
+  "last_checked_at": "2026-11-18 16:18:27",
   "index_pages": 2,
   "notice_count": 128,
   "notices": [
@@ -12,8 +12,7 @@
       "new_characters": [
         "裁命女神‧烏爾德"
       ],
-      "updates_character_values": true,
-      "content_hash": "17c9e833bd8d2ab3bea254f3b5113cb0339a18bac8927d71e7e98e0e987cb70f"
+      "updates_character_values": true
     },
     {
       "url": "https://sod.game-beans.com/jx/sodNotice/20261104/8323.html",
