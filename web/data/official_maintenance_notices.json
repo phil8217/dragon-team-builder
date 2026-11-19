@@ -1,20 +1,10 @@
 {
   "source": "https://sod.game-beans.com/jx/sodNotice/index.html",
   "accessed_at": "2026-11-19",
-  "last_checked_at": "2026-11-19 09:07:05",
+  "last_checked_at": "2026-11-19 08:59:48",
   "index_pages": 2,
   "notice_count": 129,
   "notices": [
-    {
-      "url": "https://sod.game-beans.com/jx/sodNotice/20261118/8360.html",
-      "title": "【公告】11月18日維護更新",
-      "date": "2026-11-18",
-      "new_characters": [
-        "歎息女妖‧艾貝爾"
-      ],
-      "updates_character_values": true,
-      "content_hash": "29a84ae9e844a6e22c399ba64e9ca4121becb45b4c638a275604471d3d3951b4"
-    },
     {
       "url": "https://sod.game-beans.com/jx/sodNotice/20261111/8346.html",
       "title": "【公告】11月11日維護更新",
@@ -1037,6 +1027,16 @@
       "date": "2024-11-29",
       "new_characters": [],
       "updates_character_values": false
+    },
+    {
+      "url": "https://sod.game-beans.com/jx/sodNotice/20261118/8360.html",
+      "title": "【公告】11月18日維護更新",
+      "date": "2026-11-18",
+      "new_characters": [
+        "歎息女妖‧艾貝爾"
+      ],
+      "updates_character_values": true,
+      "content_hash": "29a84ae9e844a6e22c399ba64e9ca4121becb45b4c638a275604471d3d3951b4"
     }
   ]
 }
