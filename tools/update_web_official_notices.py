@@ -406,7 +406,14 @@ def main() -> None:
             "character_count": len(characters),
         })
         atomic_write_json(WEB_VERSION_DATA, version)
-    notices = report.get("notices", [])
+    notices = sorted(
+        report.get("notices", []),
+        key=lambda item: (
+            str(item.get("date", "")),
+            str(item.get("url", "")),
+        ),
+        reverse=True,
+    )
     payload = {
         "source": "https://sod.game-beans.com/jx/sodNotice/index.html",
         "accessed_at": report.get("checked_at", ""),

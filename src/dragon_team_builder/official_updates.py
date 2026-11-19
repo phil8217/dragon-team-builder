@@ -266,9 +266,23 @@ def check_official_updates(
         "notice_count": len(notices),
         "notices": notices,
     }
+    merged_notices = sorted(
+        notices_by_url.values(),
+        key=lambda item: (
+            str(item.get("date", "")),
+            str(item.get("url", "")),
+        ),
+        reverse=True,
+    )
+    index_payload["notices"] = merged_notices
+    index_payload["notice_count"] = len(merged_notices)
+    _atomic_write(
+        MAINTENANCE_CATALOG_PATH,
+        json.dumps(index_payload, ensure_ascii=False, indent=2) + "\n",
+    )
     report = {
         "checked_at": checked_at,
-        "notices": list(notices_by_url.values()),
+        "notices": merged_notices,
         "changed_notices": changed,
         "message": "列出台服官方維護公告與角色變更狀態。",
     }

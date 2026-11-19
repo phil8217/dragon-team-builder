@@ -16,6 +16,7 @@ from PySide6.QtCore import (
     Signal,
     QUrl,
     QSize,
+    QDateTime,
     QSignalBlocker,
     QSettings,
     QThread,
@@ -1601,8 +1602,19 @@ class MainWindow(QMainWindow):
         toolbar.addAction(report_action)
 
     def _maybe_check_official_updates(self) -> None:
-        today = date.today().isoformat()
-        if self.settings.value("official_update_checked_at", "") == today:
+        now = QDateTime.currentDateTimeUtc()
+        last_checked = self.settings.value(
+            "official_update_checked_at",
+            "",
+        )
+        try:
+            elapsed_seconds = (
+                now.toSecsSinceEpoch()
+                - int(last_checked)
+            )
+        except (TypeError, ValueError):
+            elapsed_seconds = 12 * 60 * 60
+        if elapsed_seconds < 12 * 60 * 60:
             return
         self._start_official_update_check(auto=True)
 
@@ -1639,7 +1651,7 @@ class MainWindow(QMainWindow):
             return
         self.settings.setValue(
             "official_update_checked_at",
-            date.today().isoformat(),
+            str(QDateTime.currentDateTimeUtc().toSecsSinceEpoch()),
         )
         if not isinstance(report, dict):
             return

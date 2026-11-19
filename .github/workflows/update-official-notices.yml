@@ -2,7 +2,7 @@ name: Update official notices
 
 on:
   schedule:
-    - cron: "0 1 * * *"
+    - cron: "0 */12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -39,6 +39,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add web/data/official_maintenance_notices.json web/data/characters.json web/data/data_version.json web/data/images
           git commit -m "更新台服官方公告資料" \
-            -m "由 GitHub Actions 每日檢查台服官方公告首頁與第二頁。" \
+            -m "由 GitHub Actions 每 12 小時檢查台服官方公告首頁與第二頁。" \
             -m "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
           git push
