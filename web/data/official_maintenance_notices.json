@@ -1,10 +1,18 @@
 {
   "source": "https://sod.game-beans.com/jx/sodNotice/index.html",
-  "accessed_at": "2026-11-24",
-  "last_checked_at": "2026-11-25 06:06:33",
+  "accessed_at": "2026-11-25",
+  "last_checked_at": "2026-11-25 15:42:38",
   "index_pages": 2,
-  "notice_count": 129,
+  "notice_count": 130,
   "notices": [
+    {
+      "url": "https://sod.game-beans.com/jx/sodNotice/20261125/8377.html",
+      "title": "【公告】11月25日更新公告",
+      "date": "2026-11-25",
+      "new_characters": [],
+      "updates_character_values": true,
+      "content_hash": "423d07e672e46089245c7f0f60d697c924b091a9f093f70415c96f291d14cd8b"
+    },
     {
       "url": "https://sod.game-beans.com/jx/sodNotice/20261118/8360.html",
       "title": "【公告】11月18日維護更新",
